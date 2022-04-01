@@ -11,7 +11,7 @@ output: html_notebook
 }</style>
 
 ```{r include=FALSE}
-samplePath <- paste0(params$launchDir, '/', params$outdir, '/', params$meta$id, '/')
+samplePath <- paste0(params$launchDirString, '/', params$outdir, '/', params$meta$id, '/')
 mv <- 1600
 ```
 

@@ -13,6 +13,7 @@ def create_meta_map(item) {
     return [meta, projectDir + params.rmarkdown_template] 
 }
 
+params["launchDirString"] = "${launchDir}".toString()
    
 /* 
  * Run postprocessing tools

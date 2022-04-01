@@ -2,7 +2,7 @@ include { dump_params_yml; indent_code_block } from "./parametrize"
 
 process RMARKDOWNNOTEBOOK {
 
-    //tag "$meta.id"
+    tag "${meta.id}"
     label 'process_low'
 
     //NB: You likely want to override this with a container containing all required
@@ -41,9 +41,6 @@ process RMARKDOWNNOTEBOOK {
     def params_cmd = ""
     def render_cmd = ""
     
-    lparams = [:]
-    lparams["launchDir"] = "${launchDir}".toString()
-    
     if (parametrize) {
         nb_params = [:]
         if (implicit_params) {
@@ -55,7 +52,6 @@ process RMARKDOWNNOTEBOOK {
             nb_params["meta"] = meta
         }
         nb_params += parameters
-        nb_params += lparams
         params_cmd = dump_params_yml(nb_params)
         render_cmd = """\
             params = yaml::read_yaml('.params.yml')
@@ -65,9 +61,7 @@ process RMARKDOWNNOTEBOOK {
         render_cmd = "rmarkdown::render('${prefix}.Rmd')"
     }
 
-    """
-    echo $params.outdir a
-    
+    """    
     # Dump .params.yml heredoc (section will be empty if parametrization is disabled)
     ${indent_code_block(params_cmd, 4)}
 
