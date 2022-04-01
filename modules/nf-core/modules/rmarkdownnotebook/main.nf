@@ -1,8 +1,7 @@
 include { dump_params_yml; indent_code_block } from "./parametrize"
 
 process RMARKDOWNNOTEBOOK {
-
-    tag "${meta.id}"
+    tag "$meta.id"
     label 'process_low'
 
     //NB: You likely want to override this with a container containing all required
@@ -27,7 +26,7 @@ process RMARKDOWNNOTEBOOK {
     when:
     task.ext.when == null || task.ext.when
 
-    script:   
+    script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def parametrize = (task.ext.parametrize == null) ?  true : task.ext.parametrize
@@ -40,7 +39,6 @@ process RMARKDOWNNOTEBOOK {
     //  * allows to pass nested maps instead of just single values
     def params_cmd = ""
     def render_cmd = ""
-    
     if (parametrize) {
         nb_params = [:]
         if (implicit_params) {
@@ -61,7 +59,7 @@ process RMARKDOWNNOTEBOOK {
         render_cmd = "rmarkdown::render('${prefix}.Rmd')"
     }
 
-    """    
+    """
     # Dump .params.yml heredoc (section will be empty if parametrization is disabled)
     ${indent_code_block(params_cmd, 4)}
 
@@ -75,7 +73,7 @@ process RMARKDOWNNOTEBOOK {
 
     # Work around  https://github.com/rstudio/rmarkdown/issues/1508
     # If the symbolic link is not replaced by a physical file
-    # output- and temporary files will be written to the original directory.   
+    # output- and temporary files will be written to the original directory.
     mv "${notebook}" "${notebook}.orig"
     cp -L "${notebook}.orig" "${prefix}.Rmd"
 
