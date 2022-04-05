@@ -36,7 +36,7 @@ parser.add_argument('--histogramPlotAllName', metavar='name', type=str, default=
 parser.add_argument('--histogramPlotOutName', metavar='name', type=str, default='st_histogrtam_out.png', help='Figure name.')
 parser.add_argument('--histWithWithoutNorm', metavar='name', type=str, default='st_histogram_with_without_normalization.png', help='Figure name.')
 
-parser.add_argument('--nameX', metavar='File name', type=str, default='st_adata_X.npz', help='Name of the counts file.')
+parser.add_argument('--nameX', metavar='File name', type=str, default='st_adata_X.csv.gz', help='Name of the counts file.')
 parser.add_argument('--nameVar', metavar='File name', type=str, default='st_adata.var.csv', help='Name of the features file.')
 parser.add_argument('--nameObs', metavar='File name', type=str, default='st_adata.obs.csv', help='Name of the observations file.')
 
@@ -54,7 +54,8 @@ sc.settings.figdir = args.filePath
 if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
-f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
+#f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
+f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName).values
 f_temp = f_temp[list(f_temp.keys())[0]]
 print(f_temp.shape)
 
@@ -126,7 +127,8 @@ st_adata_R = st_adata.copy()
 print(st_adata_R)
 st_adata_R.X = csr_matrix(st_adata_R.X / st_adata_R.obs['norm_factors'].values[:, None])
 sc.pp.log1p(st_adata_R)
-np.savez_compressed(args.filePath + '/' + args.nameX, st_adata_R.X.T.todense())
+#np.savez_compressed(args.filePath + '/' + args.nameX, st_adata_R.X.T.todense())
+pd.DataFrame(st_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
 st_adata_R.var.to_csv(args.filePath + '/' + args.nameVar)
 st_adata_R.obs.to_csv(args.filePath + '/' + args.nameObs)
 
@@ -154,8 +156,8 @@ ax.set_xlim(0, display_cutoff);
 fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
 plt.close(fig)
 
-# Save raw filtered data
-st_adata.write(args.filePath + '/' + args.nameDataPlain) 
+## Save raw filtered data
+#st_adata.write(args.filePath + '/' + args.nameDataPlain) 
 
 # Save normalized data
 st_adata.X = csr_matrix(st_adata.X / st_adata.obs['norm_factors'].values[:, None])

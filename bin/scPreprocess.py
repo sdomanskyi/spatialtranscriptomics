@@ -34,7 +34,7 @@ parser.add_argument('--histogramPlotAllName', metavar='name', type=str, default=
 parser.add_argument('--histogramPlotFilteredName', metavar='name', type=str, default='sc_histogrtam_filtered.png', help='Figure name.')
 parser.add_argument('--histWithWithoutNorm', metavar='name', type=str, default='sc_histogram_with_without_normalization.png', help='Figure name.')
 
-parser.add_argument('--nameX', metavar='File name', type=str, default='sc_adata_X.npz', help='Name of the counts file.')
+parser.add_argument('--nameX', metavar='File name', type=str, default='sc_adata_X.csv.gz', help='Name of the counts file.')
 parser.add_argument('--nameVar', metavar='File name', type=str, default='sc_adata.var.csv', help='Name of the features file.')
 parser.add_argument('--nameObs', metavar='File name', type=str, default='sc_adata.obs.csv', help='Name of the observations file.')
 
@@ -52,7 +52,8 @@ sc.settings.figdir = args.filePath
 if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
-f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
+#f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
+f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName).values
 f_temp = f_temp[list(f_temp.keys())[0]]
 print(f_temp.shape)
 
@@ -126,8 +127,8 @@ ax.set_xlim(0, display_cutoff);
 fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
 plt.close(fig)
 
-# Save raw filtered data
-sc_adata.write(args.filePath + '/' + args.nameDataPlain)
+## Save raw filtered data
+#sc_adata.write(args.filePath + '/' + args.nameDataPlain)
 
 # Save normalized data
 sc_adata.X = csr_matrix(sc_adata.X / sc_adata.obs['norm_factors'].values[:, None])
@@ -135,7 +136,8 @@ sc.pp.log1p(sc_adata)
 sc_adata.write(args.filePath + '/' + args.nameDataNorm)
 
 # Save to open in R
-np.savez_compressed(args.filePath + '/' + args.nameX, sc_adata.X.T.todense())
+#np.savez_compressed(args.filePath + '/' + args.nameX, sc_adata.X.T.todense())
+pd.DataFrame(sc_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
 sc_adata.var.to_csv(args.filePath + '/' + args.nameVar)
 sc_adata.obs.to_csv(args.filePath + '/' + args.nameObs)
 

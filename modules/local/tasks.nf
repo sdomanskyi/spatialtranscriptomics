@@ -61,14 +61,14 @@ import groovy.json.JsonSlurper
       
     [ ! -d \${dname} ] && mkdir \${dname}
 
-    python $projectDir/bin/script_read_st_data.py --outsPath=${sample_info.st_data_dir} --saveFile=\${dname}/st_adata_raw.h5ad --countsFile=raw_feature_bc_matrix.h5 --npCountsOutputName=st_adata_counts_in_tissue.npz --minCounts=$params.STload_minCounts --minCells=$params.STload_minCells
+    python $projectDir/bin/script_read_st_data.py --outsPath=${sample_info.st_data_dir} --saveFile=\${dname}/st_adata_raw.h5ad --countsFile=raw_feature_bc_matrix.h5 --npCountsOutputName=st_adata_counts_in_tissue.csv.gz --minCounts=$params.STload_minCounts --minCells=$params.STload_minCells
 
-    python $projectDir/bin/script_read_sc_data.py --outsPath=${sample_info.sc_data_dir} --saveFile=\${dname}/sc_adata_raw.h5ad --npCountsOutputName=sc_adata_counts.npz --minCounts=$params.SCload_minCounts --minCells=$params.SCload_minCells --minGenes=$params.SCload_minGenes
+    python $projectDir/bin/script_read_sc_data.py --outsPath=${sample_info.sc_data_dir} --saveFile=\${dname}/sc_adata_raw.h5ad --npCountsOutputName=sc_adata_counts.csv.gz --minCounts=$params.SCload_minCounts --minCells=$params.SCload_minCells --minGenes=$params.SCload_minGenes
 
     if [[ -s \${dname}/st_adata_raw.h5ad ]] && \
       [[ -s \${dname}/sc_adata_raw.h5ad ]] && \
-      [[ -s \${dname}/st_adata_counts_in_tissue.npz ]] && \
-      [[ -s \${dname}/sc_adata_counts.npz ]]
+      [[ -s \${dname}/st_adata_counts_in_tissue.csv.gz ]] && \
+      [[ -s \${dname}/sc_adata_counts.csv.gz ]]
     then
       echo "completed" > "output.out" && outpath=`pwd`/output.out
     else
@@ -100,11 +100,11 @@ import groovy.json.JsonSlurper
     
     dname=${outdir}/${sample_id}
     
-    Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=st_adata_counts_in_tissue.npz --npFactorsOutputName=st_adata_counts_in_tissue_factors.npz
-    Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=sc_adata_counts.npz --npFactorsOutputName=sc_adata_counts_factors.npz
+    Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=st_adata_counts_in_tissue.csv.gz --npFactorsOutputName=st_adata_counts_in_tissue_factors.csv.gz
+    Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=sc_adata_counts.csv.gz --npFactorsOutputName=sc_adata_counts_factors.csv.gz
     
-    if [[ -s \${dname}/st_adata_counts_in_tissue_factors.npz ]] && \
-      [[ -s \${dname}/sc_adata_counts_factors.npz ]]
+    if [[ -s \${dname}/st_adata_counts_in_tissue_factors.csv.gz ]] && \
+      [[ -s \${dname}/sc_adata_counts_factors.csv.gz ]]
     then
       echo "completed" > "output.out" && outpath=`pwd`/output.out
     else
@@ -142,10 +142,10 @@ import groovy.json.JsonSlurper
     
     mitoFile=${outdir}/${sample_info.species}.MitoCarta2.0.txt
     
-    python $projectDir/bin/stPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=st_adata_counts_in_tissue_factors.npz --rawAdata=st_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.STpreprocess_pltFigSize --minCounts=$params.STpreprocess_minCounts --minGenes=$params.STpreprocess_minGenes --minCells=$params.STpreprocess_minCells --histplotQCmaxTotalCounts=$params.STpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.STpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.STpreprocess_histplotQCbins
+    python $projectDir/bin/stPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=st_adata_counts_in_tissue_factors.csv.gz --rawAdata=st_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.STpreprocess_pltFigSize --minCounts=$params.STpreprocess_minCounts --minGenes=$params.STpreprocess_minGenes --minCells=$params.STpreprocess_minCells --histplotQCmaxTotalCounts=$params.STpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.STpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.STpreprocess_histplotQCbins
 
     if [[ -s \${dname}/st_adata_norm.h5ad ]] && \
-      [[ -s \${dname}/st_adata_X.npz ]] && \
+      [[ -s \${dname}/st_adata_X.csv.gz ]] && \
       [[ -s \${dname}/st_adata.var.csv ]] && \
       [[ -s \${dname}/st_adata.obs.csv ]]
     then
@@ -185,10 +185,10 @@ import groovy.json.JsonSlurper
     
     mitoFile=${outdir}/${sample_info.species}.MitoCarta2.0.txt
     
-    python $projectDir/bin/scPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=sc_adata_counts_factors.npz --rawAdata=sc_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.SCpreprocess_pltFigSize --minCounts=$params.SCpreprocess_minCounts --minGenes=$params.SCpreprocess_minGenes --minCells=$params.SCpreprocess_minCells --histplotQCmaxTotalCounts=$params.SCpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.SCpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.SCpreprocess_histplotQCbins
+    python $projectDir/bin/scPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=sc_adata_counts_factors.csv.gz --rawAdata=sc_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.SCpreprocess_pltFigSize --minCounts=$params.SCpreprocess_minCounts --minGenes=$params.SCpreprocess_minGenes --minCells=$params.SCpreprocess_minCells --histplotQCmaxTotalCounts=$params.SCpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.SCpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.SCpreprocess_histplotQCbins
 
     if [[ -s \${dname}/sc_adata_norm.h5ad ]] && \
-      [[ -s \${dname}/sc_adata_X.npz ]] && \
+      [[ -s \${dname}/sc_adata_X.csv.gz ]] && \
       [[ -s \${dname}/sc_adata.var.csv ]] && \
       [[ -s \${dname}/sc_adata.obs.csv ]]
     then

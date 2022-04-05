@@ -12,7 +12,7 @@ library(igraph)
 library(RColorBrewer)
 library(DESeq2)
 library(ggplot2)
-library(reticulate)
+#library(reticulate)
 
 
 # Parse command-line arguments
@@ -20,14 +20,14 @@ parser <- ArgumentParser()
 
 args <- parser$add_argument_group("Agruments", "required and optional arguments")
 
-args$add_argument("--filePath", help="Path to npz counts file", metavar="dir", required=TRUE)
+args$add_argument("--filePath", help="Path to csv.gz counts file", metavar="dir", required=TRUE)
 args$add_argument("--outsPath", help="Path to data", metavar="dir", required=TRUE)
 
-args$add_argument("--nameX", default="st_adata_X.npz", help="Path to X", metavar="file", required=FALSE)
+args$add_argument("--nameX", default="st_adata_X.csv.gz", help="Path to X", metavar="file", required=FALSE)
 args$add_argument("--nameVar", default="st_adata.var.csv", help="Path to features metadata", metavar="file", required=FALSE)
 args$add_argument("--nameObs", default="st_adata.obs.csv", help="Path to observation metadata", metavar="file", required=FALSE)
 
-args$add_argument("--SCnameX", default="sc_adata_X.npz", help="Path to X", metavar="file", required=FALSE)
+args$add_argument("--SCnameX", default="sc_adata_X.csv.gz", help="Path to X", metavar="file", required=FALSE)
 args$add_argument("--SCnameVar", default="sc_adata.var.csv", help="Path to features metadata", metavar="file", required=FALSE)
 args$add_argument("--SCnameObs", default="sc_adata.obs.csv", help="Path to observation metadata", metavar="file", required=FALSE)
 
@@ -63,7 +63,7 @@ args <- parser$parse_args()
 
 # Main script
 set.seed(123)
-np <- import("numpy")
+#np <- import("numpy")
 normDataDir <- args$filePath
 
 filename <- list.files(path=args$outsPath, pattern=args$fileh5)[1]
@@ -83,7 +83,8 @@ if (!is.na(filename)) {
     se_st[["slice1"]] <- image
 }
 
-matrix_st <- np$load(paste0(normDataDir, args$nameX))[['arr_0']]
+#matrix_st <- np$load(paste0(normDataDir, args$nameX))[['arr_0']]
+matrix_st <- read.csv(paste0(normDataDir, args$nameX))
 st_genes <- read.csv(paste0(normDataDir, args$nameVar))$X
 st_obs <- read.csv(paste0(normDataDir, args$nameObs))$X
 rownames(matrix_st) <- st_genes
@@ -92,7 +93,8 @@ se_st@assays$Spatial@counts <- as((args$countsFactor)*matrix_st, "sparseMatrix")
 se_st@assays$Spatial@data <- as((args$countsFactor)*matrix_st, "sparseMatrix")
 
 
-matrix_sc <- np$load(paste0(normDataDir, args$SCnameX))[['arr_0']]
+#matrix_sc <- np$load(paste0(normDataDir, args$SCnameX))[['arr_0']]
+matrix_sc <- read.csv(paste0(normDataDir, args$SCnameX))
 sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
 sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
 rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)

@@ -6,7 +6,7 @@ library(SingleCellExperiment)
 library(ggplot2)
 library(BayesSpace)
 library(Matrix)
-library(reticulate)
+#library(reticulate)
 
 
 # Parse command-line arguments
@@ -14,8 +14,8 @@ parser <- ArgumentParser()
 
 args <- parser$add_argument_group("Agruments", "required and optional arguments")
 
-args$add_argument("--filePath", help="Path to npz counts file", metavar="dir", required=TRUE)
-args$add_argument("--nameX", default="st_adata_X.npz", help="Path to X", metavar="file", required=FALSE)
+args$add_argument("--filePath", help="Path to csv.gz counts file", metavar="dir", required=TRUE)
+args$add_argument("--nameX", default="st_adata_X.csv.gz", help="Path to X", metavar="file", required=FALSE)
 args$add_argument("--nameVar", default="st_adata.var.csv", help="Path to features metadata", metavar="file", required=FALSE)
 args$add_argument("--nameObs", default="st_adata.obs.csv", help="Path to observation metadata", metavar="file", required=FALSE)
 args$add_argument("--countsFactor", default=100, help="factor", metavar="factor", required=FALSE)
@@ -56,7 +56,7 @@ args <- parser$parse_args()
 
 # Main script
 set.seed(123)
-np <- import("numpy")
+#np <- import("numpy")
 normDataDir <- args$filePath
 
 # Load gene names
@@ -76,7 +76,9 @@ col_df$col <- st_obs_all$array_col
 
 
 # Load counts data
-count.data <- np$load(paste0(normDataDir, args$nameX))[['arr_0']] * args$countsFactor
+#count.data <- np$load(paste0(normDataDir, args$nameX))[['arr_0']] * args$countsFactor
+count.data <- read.csv(paste0(normDataDir, args$nameX)) * args$countsFactor
+
 colnames(count.data) <- st_obs_all$X
 rownames(count.data) <- rowData
 

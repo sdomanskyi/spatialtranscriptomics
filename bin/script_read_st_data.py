@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(description='Load spatial traqnscriptomics data
 parser.add_argument('--outsPath', metavar='outspath', type=str, default=None, help='Path to Space Range outs directory, etc.')
 parser.add_argument('--saveFile', metavar='savefile', type=str, default=None, help='Path to a file to save h5ad data into.')
 parser.add_argument('--countsFile', metavar='countsfile', type=str, default='raw_feature_bc_matrix.h5', help='Name of the HDF5 file.')
-parser.add_argument('--npCountsOutputName', metavar='npzoutput', type=str, default=None, help='Name of the NPZ file.')
+parser.add_argument('--npCountsOutputName', metavar='csvgzoutput', type=str, default=None, help='Name of the csv.gz file.')
 
 parser.add_argument('--minCounts', metavar='cutoff', type=int, default=1, help='Min counts per spot.')
 parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
@@ -203,6 +203,7 @@ if not os.path.exists(os.path.dirname(args.saveFile)):
 st_adata.write(args.saveFile)
 
 X = np.array(st_adata[st_adata.obs['in_tissue']==1].X.todense()).T
-np.savez_compressed(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
+#np.savez_compressed(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
+pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
 
 exit(0)
