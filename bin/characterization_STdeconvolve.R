@@ -78,7 +78,7 @@ if (!is.na(filename)) {
 }
 
 #matrix_st <- np$load(paste0(normDataDir, args$nameX))[['arr_0']]
-matrix_st <- read.csv(paste0(normDataDir, args$nameX))
+matrix_st <- data.matrix(read.csv(paste0(normDataDir, args$nameX), row.names=1))
 st_genes <- read.csv(paste0(normDataDir, args$nameVar))$X
 st_obs <- read.csv(paste0(normDataDir, args$nameObs))$X
 rownames(matrix_st) <- st_genes
@@ -139,7 +139,7 @@ write.csv(t(results$beta), file=paste0(args$filePath, args$STdeconvolveBetaNormN
 
 ##### For PCA and clustering only
 #matrix_sc <- np$load(paste0(normDataDir, args$SCnameX))[['arr_0']]
-matrix_sc <- read.csv(paste0(normDataDir, args$SCnameX))
+matrix_sc <- data.matrix(read.csv(paste0(normDataDir, args$SCnameX), row.names=1))
 sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
 sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
 rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)

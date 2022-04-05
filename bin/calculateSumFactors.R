@@ -22,7 +22,7 @@ args <- parser$parse_args()
 # Main script
 #np <- import("numpy")
 #matrix_st <- np$load(paste0(args$filePath, args$npCountsOutputName))[['arr_0']]
-matrix_st <- read.csv(paste0(args$filePath, args$npCountsOutputName))
+matrix_st <- read.csv(paste0(args$filePath, args$npCountsOutputName), row.names=1)
 print(dim(matrix_st))
 
 spe <- SpatialExperiment(list(counts=matrix_st))
@@ -30,6 +30,6 @@ sfs <- calculateSumFactors(spe, cluster=quickCluster(spe))
 print(length(sfs))
 
 #np$savez_compressed(paste0(args$filePath, args$npFactorsOutputName), sfs)
-write.csv(sfs, gzfile(paste0(args$filePath, args$npFactorsOutputName)), row.names=F)
+write.csv(sfs, gzfile(paste0(args$filePath, args$npFactorsOutputName)), row.names=FALSE)
 
 quit(status=0)

@@ -55,8 +55,9 @@ if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
 #f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
-f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName).values
+f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName, header=0).values.T[0]
 #f_temp = f_temp[list(f_temp.keys())[0]]
+print(f_temp[:10])
 print(f_temp.shape)
 
 st_adata = sc.read(args.filePath + '/' + args.rawAdata)

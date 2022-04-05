@@ -77,7 +77,7 @@ col_df$col <- st_obs_all$array_col
 
 # Load counts data
 #count.data <- np$load(paste0(normDataDir, args$nameX))[['arr_0']] * args$countsFactor
-count.data <- read.csv(paste0(normDataDir, args$nameX)) * args$countsFactor
+count.data <- read.csv(paste0(normDataDir, args$nameX), row.names=1) * args$countsFactor
 
 colnames(count.data) <- st_obs_all$X
 rownames(count.data) <- rowData
