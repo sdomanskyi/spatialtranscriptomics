@@ -54,7 +54,7 @@ if not os.path.exists(args.filePath + 'show/'):
 
 #f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
 f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName).values
-f_temp = f_temp[list(f_temp.keys())[0]]
+#f_temp = f_temp[list(f_temp.keys())[0]]
 print(f_temp.shape)
 
 sc_adata = sc.read(args.filePath + '/' + args.rawAdata)
