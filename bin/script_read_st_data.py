@@ -204,6 +204,6 @@ st_adata.write(args.saveFile)
 
 X = np.array(st_adata[st_adata.obs['in_tissue']==1].X.todense()).T
 #np.savez_compressed(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
-pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
+pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName)
 
 exit(0)
