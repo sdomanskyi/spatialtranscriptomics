@@ -62,6 +62,8 @@ process RMARKDOWNNOTEBOOK {
     """
     # Dump .params.yml heredoc (section will be empty if parametrization is disabled)
     ${indent_code_block(params_cmd, 4)}
+    
+    echo
 
     # Create output directory
     mkdir artifacts

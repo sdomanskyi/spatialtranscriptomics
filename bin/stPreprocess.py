@@ -24,6 +24,8 @@ parser.add_argument('--pltFigSize', metavar='figsize', type=int, default=6, help
 parser.add_argument('--stQCinName', metavar='name', type=str, default='st_QC_in.png', help='Figure name.')
 parser.add_argument('--stQCoutName', metavar='name', type=str, default='st_QC_out.png', help='Figure name.')
 
+parser.add_argument('--stQCviolinName', metavar='name', type=str, default='stQCViolin.png', help='Figure name.')
+
 parser.add_argument('--minCounts', metavar='cutoff', type=int, default=500, help='Min counts per spot.')
 parser.add_argument('--minGenes', metavar='cutoff', type=int, default=250, help='Min genes per spot.')
 parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
@@ -51,6 +53,9 @@ args = parser.parse_args()
 # https://scanpy.readthedocs.io/en/stable/generated/scanpy._settings.ScanpyConfig.html
 sc.settings.figdir = args.filePath
 
+if not os.path.exists(args.filePath + 'violin/'):
+    os.makedirs(args.filePath + 'violin/')
+    
 if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
@@ -73,6 +78,10 @@ st_adata.var["mt"] = st_adata.var_names.isin(mito['Symbol'])
 sc.pp.calculate_qc_metrics(st_adata, qc_vars=["mt"], inplace=True)
 
 plt.rcParams["figure.figsize"] = (args.pltFigSize, args.pltFigSize)
+
+st_adata.obs['in_tissue_cat'] = st_adata.obs['in_tissue'].replace({1: 'in', 0:'out'}).astype('category')
+
+sc.pl.violin(st_adata, ["pct_counts_mt", "total_counts", "n_genes_by_counts"], jitter=0.4, groupby='in_tissue_cat', rotation=0, save='/' + args.stQCviolinName)
 
 keys = ["in_tissue", "pct_counts_mt", "total_counts", "n_genes_by_counts"]
 st_adata_in = st_adata[st_adata.obs['in_tissue']==1].copy()
@@ -129,7 +138,7 @@ print(st_adata_R)
 st_adata_R.X = csr_matrix(st_adata_R.X / st_adata_R.obs['norm_factors'].values[:, None])
 sc.pp.log1p(st_adata_R)
 #np.savez_compressed(args.filePath + '/' + args.nameX, st_adata_R.X.T.todense())
-pd.DataFrame(st_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
+pd.DataFrame(st_adata_R.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
 st_adata_R.var.to_csv(args.filePath + '/' + args.nameVar)
 st_adata_R.obs.to_csv(args.filePath + '/' + args.nameObs)
 

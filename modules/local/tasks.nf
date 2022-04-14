@@ -138,6 +138,8 @@ import groovy.json.JsonSlurper
     """
     #!/bin/bash
     
+    echo echo
+    
     dname=${outdir}/${sample_id}
     
     mitoFile=${outdir}/${sample_info.species}.MitoCarta2.0.txt

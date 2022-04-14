@@ -46,6 +46,8 @@ Spots were filtered to have at least `r params$STpreprocess_minCounts` counts an
 
 ![__Figure__: QC of spots without tissue, i.e. ambient mRNA](`r paste0(samplePath, "show/st_QC_out.png")`){width=`r 0.73*mv`px}
 
+![__Figure__: QC violin plot](`r paste0(samplePath, "violin/stQCViolin.png")`){width=`r mv`px}
+
 
 #### QC histograms:
 
@@ -73,12 +75,12 @@ Spots were filtered to have at least `r params$STpreprocess_minCounts` counts an
 
 ## Clustering
 
-"Classical" clusters on a spatial layout (left) and a projection UMAP layout (right), showing clusters, total counts per spot and number of genes per spot on UMAP projection.
+BayesSpace clusters on a spatial layout (left) and a projection UMAP layout (right), showing clusters, total counts per spot and number of genes per spot on UMAP projection.
 
 ![__Figure__](`r paste0(samplePath, "show/Clusters_scanpy_spatial.png")`){width=400px} ![Figure: umap clusters](`r paste0(samplePath, "umap/UMAP_st_spots_clusters.png")`){width=1100px}
 
 
-![__Figure__: scanpy "classical" clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "umap_density_clusters_/UMAP_clusters_embedding_density.png")`){width=`r mv`px}
+![__Figure__: BayesSpace clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "umap_density_sclusters_/UMAP_clusters_embedding_density.png")`){width=`r mv`px}
 
 
 #### BayesSpace spatially-aware clustering
