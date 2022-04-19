@@ -5,6 +5,24 @@
     "description": "Spatial Transcriptomics",
     "type": "object",
     "definitions": {
+        "rmarkdown_options": {
+            "title": "Rmarkdown_options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "rmarkdown_include_QC": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to include QC plots in the output report"
+                },
+                "rmarkdown_template": {
+                    "type": "string",
+                    "default": "'/assets/template.rmd'",
+                    "description": "Path to template"
+                }
+            }
+        },
         "analysis_option": {
             "title": "Analysis option",
             "type": "object",
@@ -163,7 +181,7 @@
                 },
                 "STdeconvolve_corpusRemoveAbove": {
                     "type": "number",
-                    "default": 1.0,
+                    "default": 1,
                     "description": "Upper cutoff for genes"
                 },
                 "STdeconvolve_corpusRemoveBelow": {
@@ -188,7 +206,7 @@
                 },
                 "STdeconvolve_FeaturesSizeFactor": {
                     "type": "number",
-                    "default": 1.0,
+                    "default": 1,
                     "description": "Size of spots in the feature plots"
                 },
                 "SPOTlight_mtxGeneColumn": {
@@ -220,6 +238,11 @@
                     "type": "number",
                     "default": 0.35,
                     "description": "Size of scatterpies"
+                },
+                "useSCdata": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to use scRNA-seq data in the pipeline."
                 }
             }
         },
@@ -473,6 +496,9 @@
         }
     },
     "allOf": [
+        {
+            "$ref": "#/definitions/rmarkdown_options"
+        },
         {
             "$ref": "#/definitions/analysis_option"
         },
