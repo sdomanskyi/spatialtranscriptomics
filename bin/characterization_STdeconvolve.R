@@ -22,6 +22,8 @@ args$add_argument("--nameX", default="st_adata_X.csv.gz", help="Path to X", meta
 args$add_argument("--nameVar", default="st_adata.var.csv", help="Path to features metadata", metavar="file", required=FALSE)
 args$add_argument("--nameObs", default="st_adata.obs.csv", help="Path to observation metadata", metavar="file", required=FALSE)
 
+args$add_argument("--useSCdata", default=TRUE, help="Mode", metavar="flag", required=FALSE)
+
 args$add_argument("--SCnameX", default="sc_adata_X.csv.gz", help="Path to X", metavar="file", required=FALSE)
 args$add_argument("--SCnameVar", default="sc_adata.var.csv", help="Path to features metadata", metavar="file", required=FALSE)
 args$add_argument("--SCnameObs", default="sc_adata.obs.csv", help="Path to observation metadata", metavar="file", required=FALSE)
@@ -54,7 +56,6 @@ args$add_argument("--STdeconvolveSCclusterMarkers", default="STdeconvolve_sc_clu
 
 args <- parser$parse_args()
 
-
 # Main script
 set.seed(123)
 #np <- import("numpy")
@@ -77,7 +78,6 @@ if (!is.na(filename)) {
     se_st[["slice1"]] <- image
 }
 
-#matrix_st <- np$load(paste0(normDataDir, args$nameX))[['arr_0']]
 matrix_st <- data.matrix(read.csv(paste0(normDataDir, args$nameX), row.names=1))
 st_genes <- read.csv(paste0(normDataDir, args$nameVar))$X
 st_obs <- read.csv(paste0(normDataDir, args$nameObs))$X
@@ -135,31 +135,32 @@ ggsave(paste0(args$filePath, args$STdeconvolveCorrName), dpi=600, scale=0.75, wi
 write.csv(results$theta, file=paste0(args$filePath, args$STdeconvolvePropNormName))
 write.csv(t(results$beta), file=paste0(args$filePath, args$STdeconvolveBetaNormName))
 
-
-
 ##### For PCA and clustering only
-#matrix_sc <- np$load(paste0(normDataDir, args$SCnameX))[['arr_0']]
-matrix_sc <- data.matrix(read.csv(paste0(normDataDir, args$SCnameX), row.names=1))
-sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
-sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
-rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)
-colnames(matrix_sc) <- get(colnames(sc_obs)[1], sc_obs)
-se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
-
-se_sc <- Seurat::FindVariableFeatures(se_sc, verbose = FALSE)
-se_sc <- Seurat::ScaleData(se_sc, verbose = FALSE)
-se_sc <- Seurat::RunPCA(se_sc, verbose = FALSE)
-se_sc <- Seurat::RunUMAP(se_sc, dims = 1:30, verbose = FALSE)
-se_sc <- Seurat::FindNeighbors(se_sc)
-se_sc <- Seurat::FindClusters(se_sc, resolution=0.3)
-Seurat::DimPlot(se_sc, group.by = "seurat_clusters", label = TRUE) + Seurat::NoLegend()
-ggsave(paste0(args$filePath, args$STdeconvolveSCclustersName), dpi=600, scale=0.5, width=8, height=8, units='in')
-cluster_markers_all <- Seurat::FindAllMarkers(object = se_sc, assay = NULL, slot = "data", verbose = TRUE, test.use = "wilcox", only.pos = TRUE)
-
-
-write.csv(se_sc@active.ident, file=paste0(args$filePath, args$STdeconvolveSCclusterIds))
-write.csv(se_sc@reductions[["pca"]]@cell.embeddings, file=paste0(args$filePath, args$STdeconvolveSCpca))
-write.csv(se_sc@reductions[["pca"]]@feature.loadings, file=paste0(args$filePath, args$STdeconvolveSCloadings))
-write.csv(cluster_markers_all, file=paste0(args$filePath, args$STdeconvolveSCclusterMarkers))
+print("Flag:")
+print(args$useSCdata)
+if (args$useSCdata=="true") {
+    matrix_sc <- data.matrix(read.csv(paste0(normDataDir, args$SCnameX), row.names=1))
+    sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
+    sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
+    rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)
+    colnames(matrix_sc) <- get(colnames(sc_obs)[1], sc_obs)
+    se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
+    
+    se_sc <- Seurat::FindVariableFeatures(se_sc, verbose = FALSE)
+    se_sc <- Seurat::ScaleData(se_sc, verbose = FALSE)
+    se_sc <- Seurat::RunPCA(se_sc, verbose = FALSE)
+    se_sc <- Seurat::RunUMAP(se_sc, dims = 1:30, verbose = FALSE)
+    se_sc <- Seurat::FindNeighbors(se_sc)
+    se_sc <- Seurat::FindClusters(se_sc, resolution=0.3)
+    Seurat::DimPlot(se_sc, group.by = "seurat_clusters", label = TRUE) + Seurat::NoLegend()
+    ggsave(paste0(args$filePath, args$STdeconvolveSCclustersName), dpi=600, scale=0.5, width=8, height=8, units='in')
+    cluster_markers_all <- Seurat::FindAllMarkers(object = se_sc, assay = NULL, slot = "data", verbose = TRUE, test.use = "wilcox", only.pos = TRUE)
+      
+    write.csv(se_sc@active.ident, file=paste0(args$filePath, args$STdeconvolveSCclusterIds))
+    write.csv(se_sc@reductions[["pca"]]@cell.embeddings, file=paste0(args$filePath, args$STdeconvolveSCpca))
+    write.csv(se_sc@reductions[["pca"]]@feature.loadings, file=paste0(args$filePath, args$STdeconvolveSCloadings))
+    write.csv(cluster_markers_all, file=paste0(args$filePath, args$STdeconvolveSCclusterMarkers))
+} else {
+}
 
 quit(status=0)

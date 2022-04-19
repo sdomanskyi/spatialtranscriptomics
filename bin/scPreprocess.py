@@ -76,14 +76,17 @@ print(sc_adata.var)
 plt.rcParams["figure.figsize"] = (args.pltFigSize, args.pltFigSize)
 
 def histplotQC(se_data, bins, ax):
-    print(se_data.shape)
-    ax.hist(se_data, density=True, bins=bins, color='navy', alpha=0.3)
-    kde = scipy.stats.gaussian_kde(se_data)
-    xx = np.linspace(min(se_data), max(se_data), 300)
-    ax.set_xlabel(se_data.name)
-    ax.set_ylabel('Density')
-    ax.plot(xx, kde(xx), color='crimson')
-    ax.set_xlim([0, ax.get_xlim()[1]])
+    try:
+        print(se_data.shape)
+        ax.hist(se_data, density=True, bins=bins, color='navy', alpha=0.3)
+        kde = scipy.stats.gaussian_kde(se_data)
+        xx = np.linspace(min(se_data), max(se_data), 300)
+        ax.set_xlabel(se_data.name)
+        ax.set_ylabel('Density')
+        ax.plot(xx, kde(xx), color='crimson')
+        ax.set_xlim([0, ax.get_xlim()[1]])
+    except:
+        pass
     return
 
 fig, axs = plt.subplots(1, 5, figsize=(args.pltFigSize*5, args.pltFigSize))

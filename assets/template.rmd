@@ -12,6 +12,7 @@ output: html_notebook
 
 ```{r include=FALSE}
 samplePath <- paste0(params$launchDirString, '/', params$outdir, '/', params$meta$id, '/')
+useSCdata <- params$useSCdata
 mv <- 1600
 ```
 
@@ -134,24 +135,22 @@ STdeconvolve is the LDA-based method designed to infer cell types proportions in
 ![__Figure__: STdeconvolve deconvolution, topics proportions in the "classical" clusters.](`r paste0(samplePath, "violin/violin_topics_LDA.png")`){width=`r mv`px}
 
 
+```{r SPOTlight-plot, echo=FALSE, results='asis', eval=useSCdata}
 
+cat('\n#### SPOTlight spot deconvolution into cell types based on scRNA-seq data\n')
 
-#### SPOTlight spot deconvolution into cell types based on scRNA-seq data
+cat('\nSPOTlight is the NMF-based method designed to infer cell types proportions in ST data by using clustering scRNA-seq data of the same/similar tissue.\n')
 
-SPOTlight is the NMF-based method designed to infer cell types proportions in ST data by using clustering scRNA-seq data of the same/similar tissue.
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, for SPOTlight deconvolution.](%s){width=500px} ', paste0(samplePath, "SPOTlight_sc_clusters.png")))
+cat(sprintf('![__Figure__: Figure SPOTlight deconvolution.](%s){width=500px}\n', paste0(samplePath, "SPOTlight_st_scatterpies.png")))
 
-![__Figure__: scRNA-seq clusters, for SPOTlight deconvolution.](`r paste0(samplePath, "SPOTlight_sc_clusters.png")`){width=500px} ![Figure SPOTlight deconvolution.](`r paste0(samplePath, "SPOTlight_st_topic_profiles.png")`){width=500px}
+cat(sprintf('\n![__Figure__: SPOTlight deconvolution proportions scatterpies.](%s){width=500px} ', paste0(samplePath, "SPOTlight_st_topic_profiles.png")))
+cat(sprintf('![__Figure__: Figure SPOTlight deconvolution.](%s){width=500px}\n', paste0(samplePath, "SPOTlight_st_prop_corr.png")))
 
-![__Figure__: SPOTlight deconvolution proportions scatterpies.](`r paste0(samplePath, "SPOTlight_st_scatterpies.png")`){width=500px} ![Figure SPOTlight deconvolution.](`r paste0(samplePath, "SPOTlight_st_prop_corr.png")`){width=500px}
-
-<!-- ![Figure SPOTlight deconvolution.](`r paste0(samplePath, "SPOTlight_st_prop.png")`){width=`r mv`px} -->
-
-![__Figure__: SPOTlight deconvolution, cell types on a spatial layout.](`r paste0(samplePath, "show/Topics_NMF_spatial.png")`){width=`r mv`px}
-
-![__Figure__: SPOTlight deconvolution, cell types on a UMAP layout.](`r paste0(samplePath, "umap/UMAP_NMF_topics.png")`){width=`r mv`px}
-
-![__Figure__: SPOTlight deconvolution, cell types proportions in the "classical" clusters.](`r paste0(samplePath, "violin/violin_topics_NMF.png")`){width=`r mv`px}
-
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a spatial layout.](%s){width=%spx}\n', paste0(samplePath, "show/Topics_NMF_spatial.png"), mv))
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a UMAP layout.](%s){width=%spx}\n', paste0(samplePath, "umap/UMAP_NMF_topics.png"), mv))
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types proportions in the clusters.](%s){width=%spx}\n', paste0(samplePath, "violin/violin_topics_NMF.png"), mv))
+```
 
 
 <!-- ## Integration of ST and scRNA-seq data -->

@@ -129,26 +129,21 @@ def prep_input_csv_files(LinkedHashMap row) {
     if (row.st_data_dir[0..3]=='http') {
         row.st_data_dir = loadFromURL(row.sample_id, row.st_data_dir, 'ST', files_st)
     }
-    
-    if (row.sc_data_dir[0..3]=='http') {
-        row.sc_data_dir = loadFromURL(row.sample_id, row.sc_data_dir, 'SC', files_sc)
+       
+    if (row.sc_data_dir!="") {
+        if (row.sc_data_dir[0..3]=='http') {
+            row.sc_data_dir = loadFromURL(row.sample_id, row.sc_data_dir, 'SC', files_sc)
+        }
     }
     
     def fileName = String.format("%s/sample_%s", outdir, row.sample_id)    
     def FILE_HEADER = row.keySet() as String[];
-    
-    new File(fileName + ".csv").withWriter { fileWriter ->
-        def csvFilePrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)
-        csvFilePrinter.printRecord(FILE_HEADER)
-        csvFilePrinter.printRecord(row.values())
-    }
        
     File file = new File(fileName + ".json")
     file.write(JsonOutput.toJson(row))
     
     return row.sample_id
 }
-
 
 
 workflow ST {

@@ -19,12 +19,24 @@ def label_transfer(dist, labels):
     class_prob = pd.get_dummies(labels).to_numpy().T @ dist
     class_prob /= np.linalg.norm(class_prob, 2, axis=0)
     return (class_prob.T - class_prob.min(1)) / np.ptp(class_prob, axis=1)
+    
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('True', 'yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('False', 'no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Preprocess single cell transcriptomics data.')
 
 parser.add_argument('--filePath', metavar='path', type=str, default=None, help='Path to data.')
+
+parser.add_argument('--useSCdata', type=str2bool, default=True, help='Whether scRNA-seq data is available.')
 
 parser.add_argument('--fileNameST', metavar='name', type=str, default='st_adata_norm.h5ad', help='')
 parser.add_argument('--fileNameSC', metavar='name', type=str, default='sc_adata_norm.h5ad', help='')
@@ -92,40 +104,44 @@ for dirName in ['show/', 'umap/', 'umap_density_clusters_/', 'umap_density_sclus
 
 # Read pre-processed data
 st_adata = sc.read(args.filePath + args.fileNameST)
-sc_adata = sc.read(args.filePath + args.fileNameSC)
 df_st = pd.DataFrame(index=st_adata.var.index, data=st_adata.X.T.todense(), columns=st_adata.obs.index)
-df_sc = pd.DataFrame(index=sc_adata.var.index, data=sc_adata.X.T.todense(), columns=sc_adata.obs.index)
-ind = df_sc.index.intersection(df_st.index)
-df_st = df_st.loc[ind]
-df_sc = df_sc.loc[ind]
-print(df_st.shape, df_sc.shape)
+print(df_st.shape)
 
+if args.useSCdata:
+    sc_adata = sc.read(args.filePath + args.fileNameSC)
+    df_sc = pd.DataFrame(index=sc_adata.var.index, data=sc_adata.X.T.todense(), columns=sc_adata.obs.index)
+    ind = df_sc.index.intersection(df_st.index)
+    df_st = df_st.loc[ind]
+    df_sc = df_sc.loc[ind]
+    print(df_st.shape, df_sc.shape)
 
 # Read STdeconvolve results
-se_clusters_SC = pd.read_csv(args.filePath + args.STdeconvolveSCclusterIds, index_col=0).rename({'x': 'cluster_id'}, axis=1)['cluster_id']
 df_theta = pd.read_csv(args.filePath + args.STdeconvolvePropNormName, index_col=0)
 df_beta = pd.read_csv(args.filePath + args.STdeconvolveBetaNormName, index_col=0)
-hvg_SC = pd.read_csv(args.filePath + args.STdeconvolveSCloadings, index_col=0).index
-df_markers_SC = pd.read_csv(args.filePath + args.STdeconvolveSCclusterMarkers, index_col=0)
 
+if args.useSCdata:
+    se_clusters_SC = pd.read_csv(args.filePath + args.STdeconvolveSCclusterIds, index_col=0).rename({'x': 'cluster_id'}, axis=1)['cluster_id']
+    hvg_SC = pd.read_csv(args.filePath + args.STdeconvolveSCloadings, index_col=0).index
+    df_markers_SC = pd.read_csv(args.filePath + args.STdeconvolveSCclusterMarkers, index_col=0)
 
-# Simple comparison of clusters to topics
-df_beta_st = df_beta.loc[df_beta.index.intersection(df_st.index)]
-df_beta_st.columns = 'X ' + df_beta_st.columns.astype(str)
-df_sc_cl = df_sc.copy().loc[df_beta.index.intersection(df_st.index)]
-df_sc_cl.columns = pd.MultiIndex.from_arrays(se_clusters_SC.reset_index().values.T, names=['cell', 'cluster'])
-df_sc_cl = df_sc_cl.groupby(level='cluster', axis=1).mean()
-df_sc_cl.columns = 'Cluster ' + df_sc_cl.columns.astype(str)
-# Similar approach to label transfer
-df = df_sc_cl.T @ df_beta_st / df_sc_cl.shape[0]
-df /= np.linalg.norm(df, 2, axis=0)
-df = (df.T - df.min(1)) / df.values.ptp(1)
-df.T.round(3) #.style.background_gradient(axis=None)
+if args.useSCdata:
+    # Simple comparison of clusters to topics
+    df_beta_st = df_beta.loc[df_beta.index.intersection(df_st.index)]
+    df_beta_st.columns = 'X ' + df_beta_st.columns.astype(str)
+    df_sc_cl = df_sc.copy().loc[df_beta.index.intersection(df_st.index)]
+    df_sc_cl.columns = pd.MultiIndex.from_arrays(se_clusters_SC.reset_index().values.T, names=['cell', 'cluster'])
+    df_sc_cl = df_sc_cl.groupby(level='cluster', axis=1).mean()
+    df_sc_cl.columns = 'Cluster ' + df_sc_cl.columns.astype(str)
+    # Similar approach to label transfer
+    df = df_sc_cl.T @ df_beta_st / df_sc_cl.shape[0]
+    df /= np.linalg.norm(df, 2, axis=0)
+    df = (df.T - df.min(1)) / df.values.ptp(1)
+    df.T.round(3) #.style.background_gradient(axis=None)
 
 # Integrating with BBKNN
 # This is only to see the UMAP of SC and ST together
 # Not using it with label transfer
-if True: 
+if args.useSCdata: 
     st_adata = sc.read(args.filePath + args.fileNameST)
     sc_adata = sc.read(args.filePath + args.fileNameSC)
     adata_all = st_adata.concatenate(sc_adata, batch_categories=['st', 'sc'])
@@ -142,46 +158,47 @@ if True:
 
 # Correlation similarity of gene expression in PC space
 # Integrating with Scanorama
-integrated = scanorama.integrate([df_st.values.T, df_sc.values.T], [df_st.index.values, df_sc.index.values])[0]
-umap_st = UMAP(random_state=2).fit_transform(integrated[0]).T
-umap_sc = UMAP(random_state=2).fit_transform(integrated[1]).T
-fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-ax.scatter(umap_st[0], umap_st[1], alpha=0.95, s=2, label='st')
-ax.scatter(umap_sc[0], umap_sc[1], alpha=0.95, s=2, label='sc')
-plt.legend()
-fig.savefig(args.filePath + '/' + args.scanorama_UMAP_st_sc, facecolor='white', dpi=300);
-plt.close(fig)
-
-df_similarity = pd.DataFrame(data=1 - cdist(integrated[0], integrated[1], metric='correlation').T).fillna(0)
-v_in_pc = label_transfer(df_similarity.values, se_clusters_SC.values)
-
-# Plot individual histograms
-if True:
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    pd.DataFrame(v_in_pc).hist(bins=50, ax=ax);
-    fig.savefig(args.filePath + '/' + args.LT_individual_histograms, facecolor='white', dpi=300);
+if args.useSCdata:
+    integrated = scanorama.integrate([df_st.values.T, df_sc.values.T], [df_st.index.values, df_sc.index.values])[0]
+    umap_st = UMAP(random_state=2).fit_transform(integrated[0]).T
+    umap_sc = UMAP(random_state=2).fit_transform(integrated[1]).T
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    ax.scatter(umap_st[0], umap_st[1], alpha=0.95, s=2, label='st')
+    ax.scatter(umap_sc[0], umap_sc[1], alpha=0.95, s=2, label='sc')
+    plt.legend()
+    fig.savefig(args.filePath + '/' + args.scanorama_UMAP_st_sc, facecolor='white', dpi=300);
     plt.close(fig)
 
-# Plot combined histogram
-if True:
-    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-    for i in range(v_in_pc.shape[1]):
-        pd.DataFrame(v_in_pc)[i].hist(bins=100, alpha=0.5, ax=ax)
-    fig.savefig(args.filePath + '/' + args.LT_individual_histograms_combined, facecolor='white', dpi=300);
-    plt.close(fig)
-
-# Add LT results to adata 
-dfb = pd.DataFrame(v_in_pc)
-dfb.columns = 'LT PC ' + dfb.columns.astype(str)
-dfb.index = st_adata.obs.index.values
-for col in dfb.columns:
-    st_adata.obs[col] = dfb[col]
+    df_similarity = pd.DataFrame(data=1 - cdist(integrated[0], integrated[1], metric='correlation').T).fillna(0)
+    v_in_pc = label_transfer(df_similarity.values, se_clusters_SC.values)
     
-#dfc = pd.DataFrame(v_in_bbknn)
-#dfc.columns = 'LT BBKNN ' + dfc.columns.astype(str)
-#dfc.index = st_adata.obs.index.values
-#for col in dfc.columns:
-#    st_adata.obs[col] = dfc[col]
+    # Plot individual histograms
+    if True:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+        pd.DataFrame(v_in_pc).hist(bins=50, ax=ax);
+        fig.savefig(args.filePath + '/' + args.LT_individual_histograms, facecolor='white', dpi=300);
+        plt.close(fig)
+    
+    # Plot combined histogram
+    if True:
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        for i in range(v_in_pc.shape[1]):
+            pd.DataFrame(v_in_pc)[i].hist(bins=100, alpha=0.5, ax=ax)
+        fig.savefig(args.filePath + '/' + args.LT_individual_histograms_combined, facecolor='white', dpi=300);
+        plt.close(fig)
+    
+    # Add LT results to adata 
+    dfb = pd.DataFrame(v_in_pc)
+    dfb.columns = 'LT PC ' + dfb.columns.astype(str)
+    dfb.index = st_adata.obs.index.values
+    for col in dfb.columns:
+        st_adata.obs[col] = dfb[col]
+    
+    #dfc = pd.DataFrame(v_in_bbknn)
+    #dfc.columns = 'LT BBKNN ' + dfc.columns.astype(str)
+    #dfc.index = st_adata.obs.index.values
+    #for col in dfc.columns:
+    #    st_adata.obs[col] = dfc[col]
 
 # Add LDA proportions to adata
 df_theta = pd.read_csv(args.filePath + args.STdeconvolvePropNormName, index_col=0)
@@ -190,10 +207,11 @@ for col in df_theta.columns:
     st_adata.obs[col] = df_theta[col]   
 
 # Add NMF proportions to adata
-df_theta = pd.read_csv(args.filePath + args.SPOTlightPropNorm, index_col=0).set_index('barcodes').drop('res_ss', axis=1)
-df_theta.columns = 'Topic NMF ' + df_theta.columns.astype(str)
-for col in df_theta.columns:
-    st_adata.obs[col] = df_theta[col]
+if args.useSCdata:
+  df_theta = pd.read_csv(args.filePath + args.SPOTlightPropNorm, index_col=0).set_index('barcodes').drop('res_ss', axis=1)
+  df_theta.columns = 'Topic NMF ' + df_theta.columns.astype(str)
+  for col in df_theta.columns:
+      st_adata.obs[col] = df_theta[col]
 
 # Make plots with proportions
 # These plots have a uniform color-mapping of scanpy
@@ -201,10 +219,15 @@ if True:
     plt.rcParams["figure.figsize"] = (5, 5)
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic LDA ')]
     sc.pl.spatial(st_adata, img_key="hires", color=keys, ncols=10, save='/' + args.Topics_LDA_spatial)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic NMF ')]
     sc.pl.spatial(st_adata, img_key="hires", color=keys, ncols=10, save='/' + args.Topics_NMF_spatial)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('LT PC ')]
     sc.pl.spatial(st_adata, img_key="hires", color=keys, ncols=10, save='/' + args.Topics_LT_PC_spatial)
+    
     #keys = st_adata.var.index.intersection(all_markers).values
     #sc.pl.spatial(st_adata, img_key="hires", color=keys, ncols=9, save='/' + args.All_Markers_spatial)
 
@@ -231,8 +254,12 @@ if True:
     plt.rcParams["figure.figsize"] = (4, 4)
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic LDA ')]
     sc.pl.umap(st_adata, color=keys, wspace=0.4, ncols=5, save='/' + args.UMAP_LDA_topics)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic NMF ')]
     sc.pl.umap(st_adata, color=keys, wspace=0.4, ncols=5, save='/' + args.UMAP_NMF_topics)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('LT PC ')]
     sc.pl.umap(st_adata, color=keys, wspace=0.4, ncols=5, save='/' + args.UMAP_LT_PC_topics)
 
@@ -246,12 +273,18 @@ if True:
     plt.rcParams["figure.figsize"] = (3.5, 3.5)
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic LDA ')]
     sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_LDA)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic NMF ')]
     sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_NMF)
+    
+if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('LT PC ')]
     sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_LT_PC)
 
 st_adata.write(args.filePath + '/' + args.saveFileST)
-sc_adata.write(args.filePath + '/' + args.saveFileSC)
+
+if args.useSCdata:
+    sc_adata.write(args.filePath + '/' + args.saveFileSC)
 
 exit(0)
