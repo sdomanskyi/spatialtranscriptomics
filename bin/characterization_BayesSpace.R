@@ -33,7 +33,7 @@ args$add_argument("--bayesOriginalEnhancedFeatures", default="st_bayes_original_
 args$add_argument("--bayesEnhancedMarkers", default="bayes_enhanced_markers.csv", help="file name", metavar="file", required=FALSE)
 args$add_argument("--bayesSubspotCoord", default="bayes_subspot_cluster_and_coord.csv", help="file name", metavar="file", required=FALSE)
 args$add_argument("--bayesSpotCluster", default="bayes_spot_cluster.csv", help="file name", metavar="file", required=FALSE)
-
+args$add_argument("--logNormalize", default=TRUE, help="file name", metavar="file", required=FALSE)
 args <- parser$parse_args()
 
 
@@ -76,8 +76,7 @@ col_df$col <- st_obs_all$array_col
 
 
 # Load counts data
-#count.data <- np$load(paste0(normDataDir, args$nameX))[['arr_0']] * args$countsFactor
-count.data <- read.csv(paste0(normDataDir, args$nameX), row.names=1) * args$countsFactor
+count.data <- exp(read.csv(paste0(normDataDir, args$nameX), row.names=1)) - 1
 
 colnames(count.data) <- st_obs_all$X
 rownames(count.data) <- rowData
@@ -90,7 +89,7 @@ print(args$minClusters)
 
 
 dsp <- SingleCellExperiment(assays=list(counts=count.data), rowData=row_df, colData=col_df)
-dsp <- spatialPreprocess(dsp, platform=args$STplatform, n.PCs=args$numberPCs, n.HVGs=args$numberHVG, log.normalize=TRUE)
+dsp <- spatialPreprocess(dsp, platform=args$STplatform, n.PCs=args$numberPCs, n.HVGs=args$numberHVG, log.normalize=args$logNormalize)
     
 dsp <- qTune(dsp, qs=seq(args$minClusters, args$maxClusters), platform="Visium", d=args$numberPCs)
 qPlot(dsp)

@@ -16,6 +16,9 @@ parser.add_argument('--outsPath', metavar='outspath', type=str, default=None, he
 parser.add_argument('--saveFile', metavar='savefile', type=str, default=None, help='Path to a file to save h5ad data into.')
 parser.add_argument('--npCountsOutputName', metavar='csvgzoutput', type=str, default=None, help='Name of the csv.gz file.')
 
+parser.add_argument('--nameVarRaw', metavar='File name', type=str, default='sc_adata.raw.var.csv', help='Name of the features file.')
+parser.add_argument('--nameObsRaw', metavar='File name', type=str, default='sc_adata.raw.obs.csv', help='Name of the observations file.')
+
 parser.add_argument('--minCounts', metavar='cutoff', type=int, default=1, help='Min counts per spot.')
 parser.add_argument('--minGenes', metavar='cutoff', type=int, default=1, help='Min genes per spot.')
 parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
@@ -62,8 +65,10 @@ if not os.path.exists(os.path.dirname(args.saveFile)):
 
 sc_adata.write(args.saveFile)
 
+sc_adata.var.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameVarRaw)
+sc_adata.obs.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameObsRaw)
+
 X = np.array(sc_adata.X.todense()).T
-#np.savez_compressed(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
 pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName)
 
 exit(0)

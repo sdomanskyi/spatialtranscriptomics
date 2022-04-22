@@ -26,6 +26,9 @@ parser.add_argument('--saveFile', metavar='savefile', type=str, default=None, he
 parser.add_argument('--countsFile', metavar='countsfile', type=str, default='raw_feature_bc_matrix.h5', help='Name of the HDF5 file.')
 parser.add_argument('--npCountsOutputName', metavar='csvgzoutput', type=str, default=None, help='Name of the csv.gz file.')
 
+parser.add_argument('--nameVarRaw', metavar='File name', type=str, default='st_adata.raw.var.csv', help='Name of the features file.')
+parser.add_argument('--nameObsRaw', metavar='File name', type=str, default='st_adata.raw.obs.csv', help='Name of the observations file.')
+
 parser.add_argument('--minCounts', metavar='cutoff', type=int, default=1, help='Min counts per spot.')
 parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
 
@@ -202,8 +205,10 @@ if not os.path.exists(os.path.dirname(args.saveFile)):
 
 st_adata.write(args.saveFile)
 
+st_adata[st_adata.obs['in_tissue']==1].var.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameVarRaw)
+st_adata[st_adata.obs['in_tissue']==1].obs.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameObsRaw)
+
 X = np.array(st_adata[st_adata.obs['in_tissue']==1].X.todense()).T
-#np.savez_compressed(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName, X)
 pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName)
 
 exit(0)

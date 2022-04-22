@@ -87,7 +87,7 @@ import groovy.json.JsonSlurper
 /* 
  * Calculate ST and SC sum factors
  */
- process ST_CALCULATE_SUM_FACTORS {
+ process NORMALIZATION {
     
     label "r_process"
     cpus 2
@@ -106,14 +106,22 @@ import groovy.json.JsonSlurper
     dname=${outdir}/${sample_id}
     
     Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=st_adata_counts_in_tissue.csv.gz --npFactorsOutputName=st_adata_counts_in_tissue_factors.csv.gz
+    Rscript $projectDir/bin/SCtransform.R --filePath=\${dname}/ --npCountsOutputName=st_adata_counts_in_tissue.csv.gz --fileVarRaw=st_adata.raw.var.csv --fileObsRaw=st_adata.raw.obs.csv --npNormalizedOutputName=st_adata_sctransformed.csv.gz
     
     if [ $params.useSCdata == true ]
     then    
       Rscript $projectDir/bin/calculateSumFactors.R --filePath=\${dname}/ --npCountsOutputName=sc_adata_counts.csv.gz --npFactorsOutputName=sc_adata_counts_factors.csv.gz
+      Rscript $projectDir/bin/SCtransform.R --filePath=\${dname}/ --npCountsOutputName=sc_adata_counts.csv.gz --fileVarRaw=sc_adata.raw.var.csv --fileObsRaw=sc_adata.raw.obs.csv --npNormalizedOutputName=sc_adata_sctransformed.csv.gz
     fi
     
     if [ -s \${dname}/st_adata_counts_in_tissue_factors.csv.gz ] && \
-      [ $params.useSCdata == false -o -s \${dname}/sc_adata_counts_factors.csv.gz ]
+      [ -s \${dname}/st_adata.raw.var.csv ] && \
+      [ -s \${dname}/st_adata.raw.obs.csv ] && \
+      [ -s \${dname}/st_adata_sctransformed.csv.gz ] && \
+      [ $params.useSCdata == false -o -s \${dname}/sc_adata_counts_factors.csv.gz ] && \
+      [ $params.useSCdata == false -o -s \${dname}/sc_adata.raw.var.csv ] && \
+      [ $params.useSCdata == false -o -s \${dname}/sc_adata.raw.obs.csv ] && \
+      [ $params.useSCdata == false -o -s \${dname}/sc_adata_sctransformed.csv.gz ]
     then
       echo "completed" > "output.out" && outpath=`pwd`/output.out
     else
@@ -153,7 +161,7 @@ import groovy.json.JsonSlurper
     
     mitoFile=${outdir}/${sample_info.species}.MitoCarta2.0.txt
     
-    python $projectDir/bin/stPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=st_adata_counts_in_tissue_factors.csv.gz --rawAdata=st_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.STpreprocess_pltFigSize --minCounts=$params.STpreprocess_minCounts --minGenes=$params.STpreprocess_minGenes --minCells=$params.STpreprocess_minCells --histplotQCmaxTotalCounts=$params.STpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.STpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.STpreprocess_histplotQCbins
+    python $projectDir/bin/stPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=st_adata_counts_in_tissue_factors.csv.gz --rawAdata=st_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.STpreprocess_pltFigSize --minCounts=$params.STpreprocess_minCounts --minGenes=$params.STpreprocess_minGenes --minCells=$params.STpreprocess_minCells --histplotQCmaxTotalCounts=$params.STpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.STpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.STpreprocess_histplotQCbins --SCtransform=$params.SCtransform
 
     if [[ -s \${dname}/st_adata_norm.h5ad ]] && \
       [[ -s \${dname}/st_adata_X.csv.gz ]] && \
@@ -198,7 +206,7 @@ import groovy.json.JsonSlurper
  
     if [ $params.useSCdata == true ]
     then   
-      python $projectDir/bin/scPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=sc_adata_counts_factors.csv.gz --rawAdata=sc_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.SCpreprocess_pltFigSize --minCounts=$params.SCpreprocess_minCounts --minGenes=$params.SCpreprocess_minGenes --minCells=$params.SCpreprocess_minCells --histplotQCmaxTotalCounts=$params.SCpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.SCpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.SCpreprocess_histplotQCbins
+      python $projectDir/bin/scPreprocess.py --filePath=\${dname}/ --npFactorsOutputName=sc_adata_counts_factors.csv.gz --rawAdata=sc_adata_raw.h5ad --mitoFile=\$mitoFile --pltFigSize=$params.SCpreprocess_pltFigSize --minCounts=$params.SCpreprocess_minCounts --minGenes=$params.SCpreprocess_minGenes --minCells=$params.SCpreprocess_minCells --histplotQCmaxTotalCounts=$params.SCpreprocess_histplotQCmaxTotalCounts --histplotQCminGeneCounts=$params.SCpreprocess_histplotQCminGeneCounts --histplotQCbins=$params.SCpreprocess_histplotQCbins --SCtransform=$params.SCtransform
     fi
 
     if [ $params.useSCdata == false -o -s \${dname}/sc_adata_norm.h5ad ] && \

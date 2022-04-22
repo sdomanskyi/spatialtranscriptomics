@@ -38,6 +38,10 @@ parser.add_argument('--histogramPlotAllName', metavar='name', type=str, default=
 parser.add_argument('--histogramPlotOutName', metavar='name', type=str, default='st_histogrtam_out.png', help='Figure name.')
 parser.add_argument('--histWithWithoutNorm', metavar='name', type=str, default='st_histogram_with_without_normalization.png', help='Figure name.')
 
+parser.add_argument('--SCtransform', metavar='name', type=str, default='true', help='Use SCtransform.')
+
+parser.add_argument('--npNormalizedOutputName', metavar='File name', type=str, default='st_adata_sctransformed.csv.gz', help='Name of the normalized counts file.')
+
 parser.add_argument('--nameX', metavar='File name', type=str, default='st_adata_X.csv.gz', help='Name of the counts file.')
 parser.add_argument('--nameVar', metavar='File name', type=str, default='st_adata.var.csv', help='Name of the features file.')
 parser.add_argument('--nameObs', metavar='File name', type=str, default='st_adata.obs.csv', help='Name of the observations file.')
@@ -59,15 +63,10 @@ if not os.path.exists(args.filePath + 'violin/'):
 if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
-#f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
-f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName, header=0).values.T[0]
-#f_temp = f_temp[list(f_temp.keys())[0]]
-print(f_temp[:10])
-print(f_temp.shape)
-
 st_adata = sc.read(args.filePath + '/' + args.rawAdata)
 print(st_adata.shape)
 
+f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName, header=0).values.T[0]
 st_adata.obs['norm_factors'] = pd.Series(index=st_adata.obs[st_adata.obs['in_tissue']==1].index, data=f_temp).reindex(st_adata.obs.index)
 
 mito = pd.read_csv(args.mitoFile, index_col=['Symbol', 'MCARTA2_LIST'], delimiter='\t')['EnsemblGeneID']
@@ -132,16 +131,14 @@ plt.close(fig)
 st_adata = st_adata[st_adata.obs['in_tissue']==1]
 print('Filtered out spots outside tissue:', st_adata.shape)
 
-# Save to open in R
-st_adata_R = st_adata.copy()
-print(st_adata_R)
-st_adata_R.X = csr_matrix(st_adata_R.X / st_adata_R.obs['norm_factors'].values[:, None])
-sc.pp.log1p(st_adata_R)
-#np.savez_compressed(args.filePath + '/' + args.nameX, st_adata_R.X.T.todense())
-pd.DataFrame(st_adata_R.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
-st_adata_R.var.to_csv(args.filePath + '/' + args.nameVar)
-st_adata_R.obs.to_csv(args.filePath + '/' + args.nameObs)
+st_adata_raw = st_adata.copy()
 
+if args.SCtransform=='true':
+    temp_normed = pd.read_csv(args.filePath + '/' + args.npNormalizedOutputName, index_col=0, header=0)
+    st_adata = st_adata[temp_normed.columns, temp_normed.index]
+    st_adata.X = csr_matrix(temp_normed.T)
+else:
+    st_adata.X = csr_matrix(st_adata.X / st_adata.obs['norm_factors'].values[:, None])
 
 sc.pp.filter_cells(st_adata, min_counts=args.minCounts)
 sc.pp.filter_cells(st_adata, min_genes=args.minGenes)
@@ -149,29 +146,33 @@ sc.pp.filter_genes(st_adata, min_cells=args.minCells)
 print('Filtered spots and genes:', st_adata.shape)
 
 # Effect of normalization by size factors
-fig, ax = plt.subplots(figsize=(args.pltFigSize, args.pltFigSize))
-display_cutoff = 10**5
-se = pd.Series(np.array(st_adata.X.sum(axis=1)).T[0])
-se = se[se<display_cutoff]
-print('Number of spots displayed:', se.shape)
-se.hist(bins=100, alpha=0.75, ax=ax)
-ax.set_xlim(0, display_cutoff);
-st_adata_c = st_adata[st_adata.obs['in_tissue']==1].copy()
-st_adata_c.X = csr_matrix(st_adata.X / st_adata.obs['norm_factors'].values[:, None])
-se = pd.Series(np.array(st_adata_c.X.sum(axis=1)).T[0])
-se = se[se<display_cutoff]
-print('Number of spots displayed:', se.shape)
-se.hist(bins=100, alpha=0.75, ax=ax)
-ax.set_xlim(0, display_cutoff);
-fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
-plt.close(fig)
+if True:
+    fig, ax = plt.subplots(figsize=(args.pltFigSize, args.pltFigSize))
+    display_cutoff = 10**5
+    
+    se = pd.Series(np.array(st_adata.X.sum(axis=1)).T[0])
+    se = se[se<display_cutoff]
+    print('Number of spots displayed:', se.shape)
+    se.hist(bins=100, alpha=0.75, ax=ax)
+    #ax.set_xlim(0, display_cutoff);
+    
+    se = pd.Series(np.array(st_adata_raw.X.sum(axis=1)).T[0])
+    se = se[se<display_cutoff]
+    print('Number of spots displayed:', se.shape)
+    se.hist(bins=100, alpha=0.75, ax=ax)
+    #ax.set_xlim(0, display_cutoff);
+    
+    fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
+    plt.close(fig)
+    
+if not args.SCtransform=='true':
+    sc.pp.log1p(st_adata)
 
-## Save raw filtered data
-#st_adata.write(args.filePath + '/' + args.nameDataPlain) 
-
-# Save normalized data
-st_adata.X = csr_matrix(st_adata.X / st_adata.obs['norm_factors'].values[:, None])
-sc.pp.log1p(st_adata)
-st_adata.write(args.filePath + '/' + args.nameDataNorm)
+# Save normalized data to open in R and Python
+if True:   
+    pd.DataFrame(st_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
+    st_adata.var.to_csv(args.filePath + '/' + args.nameVar)
+    st_adata.obs.to_csv(args.filePath + '/' + args.nameObs)   
+    st_adata.write(args.filePath + '/' + args.nameDataNorm)
 
 exit(0)

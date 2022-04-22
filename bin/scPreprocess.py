@@ -34,6 +34,10 @@ parser.add_argument('--histogramPlotAllName', metavar='name', type=str, default=
 parser.add_argument('--histogramPlotFilteredName', metavar='name', type=str, default='sc_histogrtam_filtered.png', help='Figure name.')
 parser.add_argument('--histWithWithoutNorm', metavar='name', type=str, default='sc_histogram_with_without_normalization.png', help='Figure name.')
 
+parser.add_argument('--SCtransform', metavar='name', type=str, default='true', help='Use SCtransform.')
+
+parser.add_argument('--npNormalizedOutputName', metavar='File name', type=str, default='sc_adata_sctransformed.csv.gz', help='Name of the normalized counts file.')
+
 parser.add_argument('--nameX', metavar='File name', type=str, default='sc_adata_X.csv.gz', help='Name of the counts file.')
 parser.add_argument('--nameVar', metavar='File name', type=str, default='sc_adata.var.csv', help='Name of the features file.')
 parser.add_argument('--nameObs', metavar='File name', type=str, default='sc_adata.obs.csv', help='Name of the observations file.')
@@ -52,12 +56,7 @@ sc.settings.figdir = args.filePath
 if not os.path.exists(args.filePath + 'show/'):
     os.makedirs(args.filePath + 'show/')
 
-#f_temp = np.load(args.filePath + '/' + args.npFactorsOutputName)
 f_temp = pd.read_csv(args.filePath + '/' + args.npFactorsOutputName, header=0).values.T[0]
-#f_temp = f_temp[list(f_temp.keys())[0]]
-print(f_temp[:10])
-print(f_temp.shape)
-
 sc_adata = sc.read(args.filePath + '/' + args.rawAdata)
 print(sc_adata.shape)
 
@@ -98,12 +97,6 @@ histplotQC(sc_adata.obs["pct_counts_mt"], bins=args.histplotQCbins, ax=axs[4])
 fig.tight_layout()
 fig.savefig(args.filePath + '/' + args.histogramPlotAllName, facecolor='white')
 
-# Filter cells and genes
-sc.pp.filter_cells(sc_adata, min_counts=args.minCounts)
-sc.pp.filter_cells(sc_adata, min_genes=args.minGenes)
-sc.pp.filter_genes(sc_adata, min_cells=args.minCells)
-print(sc_adata.shape)
-
 fig, axs = plt.subplots(1, 5, figsize=(args.pltFigSize*5, args.pltFigSize))
 histplotQC(sc_adata.obs["total_counts"], bins=args.histplotQCbins, ax=axs[0])
 histplotQC(sc_adata.obs["total_counts"][sc_adata.obs["total_counts"] < args.histplotQCmaxTotalCounts], bins=args.histplotQCbins, ax=axs[1])
@@ -113,36 +106,53 @@ histplotQC(sc_adata.obs["pct_counts_mt"], bins=args.histplotQCbins, ax=axs[4])
 fig.tight_layout()
 fig.savefig(args.filePath + '/' + args.histogramPlotFilteredName, facecolor='white')
 
+sc_adata_raw = sc_adata.copy()
+print('Data shape:', sc_adata.shape)
+
+if args.SCtransform=='true':
+    temp_normed = pd.read_csv(args.filePath + '/' + args.npNormalizedOutputName, index_col=0, header=0)
+    print('temp_normed:', temp_normed.shape)
+    sc_adata = sc_adata[temp_normed.columns, temp_normed.index]
+    sc_adata.X = csr_matrix(temp_normed.T)
+else:
+    sc_adata.X = csr_matrix(sc_adata.X / st_adata.obs['norm_factors'].values[:, None])
+
+
+# Filter cells and genes
+sc.pp.filter_cells(sc_adata, min_counts=args.minCounts)
+sc.pp.filter_cells(sc_adata, min_genes=args.minGenes)
+sc.pp.filter_genes(sc_adata, min_cells=args.minCells)
+print(sc_adata.shape)
+
 # Effect of normalization by size factors
-fig, ax = plt.subplots(figsize=(args.pltFigSize, args.pltFigSize))
-display_cutoff = 5*10**3
-se = pd.Series(np.array(sc_adata.X.sum(axis=1)).T[0])
-se = se[se<display_cutoff]
-print('Number of cells displayed:', se.shape)
-se.hist(bins=100, alpha=0.75, ax=ax)
-ax.set_xlim(0, display_cutoff);
-sc_adata_c = sc_adata.copy()
-sc_adata_c.X = csr_matrix(sc_adata.X / sc_adata.obs['norm_factors'].values[:, None])
-se = pd.Series(np.array(sc_adata_c.X.sum(axis=1)).T[0])
-se = se[se<display_cutoff]
-print('Number of cells displayed:', se.shape)
-se.hist(bins=100, alpha=0.75, ax=ax)
-ax.set_xlim(0, display_cutoff);
-fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
-plt.close(fig)
+if True:
+    fig, ax = plt.subplots(figsize=(args.pltFigSize, args.pltFigSize))
+    display_cutoff = 5*10**3
+    
+    se = pd.Series(np.array(sc_adata.X.sum(axis=1)).T[0])
+    se = se[se<display_cutoff]
+    print('Number of cells displayed:', se.shape)
+    se.hist(bins=100, alpha=0.75, ax=ax)
+    #ax.set_xlim(0, display_cutoff);
+    
+    se = pd.Series(np.array(sc_adata_raw.X.sum(axis=1)).T[0])
+    se = se[se<display_cutoff]
+    print('Number of cells displayed:', se.shape)
+    se.hist(bins=100, alpha=0.75, ax=ax)
+    #ax.set_xlim(0, display_cutoff);
+    
+    fig.savefig(args.filePath + '/' + args.histWithWithoutNorm, facecolor='white', dpi=300);
+    plt.close(fig)
 
-## Save raw filtered data
-#sc_adata.write(args.filePath + '/' + args.nameDataPlain)
 
-# Save normalized data
-sc_adata.X = csr_matrix(sc_adata.X / sc_adata.obs['norm_factors'].values[:, None])
-sc.pp.log1p(sc_adata)
-sc_adata.write(args.filePath + '/' + args.nameDataNorm)
+if not args.SCtransform=='true':
+    sc.pp.log1p(sc_adata)
 
-# Save to open in R
-#np.savez_compressed(args.filePath + '/' + args.nameX, sc_adata.X.T.todense())
-pd.DataFrame(sc_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
-sc_adata.var.to_csv(args.filePath + '/' + args.nameVar)
-sc_adata.obs.to_csv(args.filePath + '/' + args.nameObs)
+# Save normalized data to open in R and Python
+if True:   
+    pd.DataFrame(sc_adata.X.T.todense()).to_csv(args.filePath + '/' + args.nameX)
+    sc_adata.var.to_csv(args.filePath + '/' + args.nameVar)
+    sc_adata.obs.to_csv(args.filePath + '/' + args.nameObs)   
+    sc_adata.write(args.filePath + '/' + args.nameDataNorm)
 
 exit(0)
