@@ -89,8 +89,11 @@ st_genes <- read.csv(paste0(normDataDir, args$nameVar))$X
 st_obs <- read.csv(paste0(normDataDir, args$nameObs))$X
 rownames(matrix_st) <- st_genes
 colnames(matrix_st) <- st_obs
-se_st@assays$Spatial@counts <- as((args$countsFactor)*matrix_st, "sparseMatrix")
-se_st@assays$Spatial@data <- as((args$countsFactor)*matrix_st, "sparseMatrix")
+matrix_st <- as(exp(matrix_st) - 1, "sparseMatrix")
+se_st@assays$Spatial@counts <- matrix_st
+se_st@assays$Spatial@data <- matrix_st
+#se_st@assays$Spatial@counts <- as((args$countsFactor)*matrix_st, "sparseMatrix")
+#se_st@assays$Spatial@data <- as((args$countsFactor)*matrix_st, "sparseMatrix")
 
 
 #matrix_sc <- np$load(paste0(normDataDir, args$SCnameX))[['arr_0']]
@@ -99,7 +102,8 @@ sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
 sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
 rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)
 colnames(matrix_sc) <- get(colnames(sc_obs)[1], sc_obs)
-se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
+se_sc <- Seurat::CreateSeuratObject(counts = as(exp(matrix_sc) - 1, "sparseMatrix"))
+#se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
 
 # Cluster sc data
 se_sc <- Seurat::FindVariableFeatures(se_sc, verbose = FALSE)
@@ -151,7 +155,7 @@ rm(decon_mtrx_sub)
 rownames(decon_mtrx) <- colnames(se_st) 
 decon_df <- decon_mtrx %>% data.frame() %>% tibble::rownames_to_column("barcodes")
 
-#se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
+se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
 
 # Individual cell types on image
 #Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1][-length(colnames(decon_df))+1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=1.0)

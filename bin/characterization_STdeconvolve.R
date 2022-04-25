@@ -85,7 +85,9 @@ rownames(matrix_st) <- st_genes
 colnames(matrix_st) <- st_obs
 se_st@assays$Spatial@counts <- as(matrix_st, "sparseMatrix")
 se_st@assays$Spatial@data <- as(matrix_st, "sparseMatrix")
-se_st@assays$Spatial@counts <- round((args$countsFactor)*se_st@assays$Spatial@counts)
+
+#se_st@assays$Spatial@counts <- round((args$countsFactor)*se_st@assays$Spatial@counts)
+se_st@assays$Spatial@counts <- as(round(exp(se_st@assays$Spatial@counts) - 1), Class='dgCMatrix')
 
 corpus <- restrictCorpus(se_st@assays$Spatial@counts, removeAbove=args$corpusRemoveAbove, removeBelow=args$corpusRemoveBelow)
 corpus <- corpus + 1
@@ -132,8 +134,15 @@ ggcorrplot::ggcorrplot(corr = decon_cor, p.mat = p.mat[[1]], hc.order = TRUE, ty
     axis.text.x = ggplot2::element_text(angle = 90), axis.text = ggplot2::element_text(size = 18, vjust = 0.5))
 ggsave(paste0(args$filePath, args$STdeconvolveCorrName), dpi=600, scale=0.75, width=8, height=8, units='in')
 
+print('Mark LDA 1')
+
 write.csv(results$theta, file=paste0(args$filePath, args$STdeconvolvePropNormName))
+
+print('Mark LDA 2')
+
 write.csv(t(results$beta), file=paste0(args$filePath, args$STdeconvolveBetaNormName))
+
+print('Mark LDA 3')
 
 ##### For PCA and clustering only
 print("Flag:")
@@ -144,7 +153,9 @@ if (args$useSCdata=="true") {
     sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
     rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)
     colnames(matrix_sc) <- get(colnames(sc_obs)[1], sc_obs)
-    se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
+    
+    se_sc <- Seurat::CreateSeuratObject(counts = as(exp(matrix_sc) - 1, "sparseMatrix"))
+    #se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
     
     se_sc <- Seurat::FindVariableFeatures(se_sc, verbose = FALSE)
     se_sc <- Seurat::ScaleData(se_sc, verbose = FALSE)
