@@ -114,9 +114,9 @@ decon_df <- deconProp %>% data.frame() %>% tibble::rownames_to_column("barcodes"
 print(colnames(decon_df))
 print(dim(decon_df))
 
-se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
-Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=args$STdeconvolveFeaturesSizeFactor)
-ggsave(paste0(args$filePath, args$STdeconvolveFeaturesName), dpi=300, scale=2.0, width=8, height=8, units='in')
+#se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
+#Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=args$STdeconvolveFeaturesSizeFactor)
+#ggsave(paste0(args$filePath, args$STdeconvolveFeaturesName), dpi=300, scale=2.0, width=8, height=8, units='in')
 
 # Cell type proportions correlation
 decon_mtrx_sub <- deconProp[, colnames(deconProp)[which(colnames(deconProp) != "res_ss")]]

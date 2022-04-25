@@ -111,23 +111,27 @@ se_sc <- Seurat::FindClusters(se_sc, resolution=args$clusterResolution)
 Seurat::DimPlot(se_sc, group.by = "seurat_clusters", label = TRUE) + Seurat::NoLegend()
 ggsave(paste0(args$filePath, args$SPOTlightSCclustersName), dpi=600, scale=0.5, width=8, height=8, units='in')
 
-cluster_markers_all <- Seurat::FindAllMarkers(object = se_sc, assay = NULL, slot = "data", verbose = TRUE, test.use = "wilcox", only.pos = TRUE)
 
-spotlight_ls <- SPOTlight::spotlight_deconvolution(
-  se_sc = se_sc,				# Single cell dataset
-  counts_spatial = se_st@assays$Spatial@counts,	# Spatial dataset count
-  clust_vr = "seurat_clusters", 		# Variable in sc_sc containing the cell-type annotation
-  cluster_markers = cluster_markers_all, 	# Dataframe with the marker genes
-  cl_n = args$numberCellsPerCelltype, 					# Number of cells per cell type to use
-  hvg = args$numberHVG, 					# Number of HVG to use
-  ntop = NULL, 					# Number of top marker genes to use (by default all)
-  transf = "uv", 				# Perform unit-variance scaling per cell and spot prior to factorzation and NLS
-  method = "nsNMF", 				# Factorization method
-  min_cont = 0)					# Remove those cells contributing to a spot below a certain threshold 
+if (TRUE) {
+    cluster_markers_all <- Seurat::FindAllMarkers(object = se_sc, assay = NULL, slot = "data", verbose = TRUE, test.use = "wilcox", only.pos = TRUE)
+    write.csv(cluster_markers_all, file=paste0(args$filePath, args$SPOTlightSCclusterMarkers))
+    
+    spotlight_ls <- SPOTlight::spotlight_deconvolution(
+      se_sc = se_sc,				# Single cell dataset
+      counts_spatial = se_st@assays$Spatial@counts,	# Spatial dataset count
+      clust_vr = "seurat_clusters", 		# Variable in sc_sc containing the cell-type annotation
+      cluster_markers = cluster_markers_all, 	# Dataframe with the marker genes
+      cl_n = args$numberCellsPerCelltype, 					# Number of cells per cell type to use
+      hvg = args$numberHVG, 					# Number of HVG to use
+      ntop = NULL, 					# Number of top marker genes to use (by default all)
+      transf = "uv", 				# Perform unit-variance scaling per cell and spot prior to factorzation and NLS
+      method = "nsNMF", 				# Factorization method
+      min_cont = 0)					# Remove those cells contributing to a spot below a certain threshold 
 
-saveRDS(object = spotlight_ls, file = paste0(args$filePath, args$NMFsaveFile))
-
-# spotlight_ls <- readRDS(file = paste0(args$filePath, args$NMFsaveFile))
+    saveRDS(object = spotlight_ls, file = paste0(args$filePath, args$NMFsaveFile))
+} else {
+    spotlight_ls <- readRDS(file = paste0(args$filePath, args$NMFsaveFile))
+}
 
 # NMF topic profiles
 nmf_mod <- spotlight_ls[[1]]
@@ -143,14 +147,15 @@ decon_mtrx_sub <- decon_mtrx[, colnames(decon_mtrx)!="res_ss"]
 decon_mtrx_sub[decon_mtrx_sub < 0.08] <- 0
 decon_mtrx <- cbind(decon_mtrx_sub, "res_ss" = decon_mtrx[, "res_ss"])
 rm(decon_mtrx_sub)
+
 rownames(decon_mtrx) <- colnames(se_st) 
 decon_df <- decon_mtrx %>% data.frame() %>% tibble::rownames_to_column("barcodes")
-se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
+
+#se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
 
 # Individual cell types on image
-Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1][-length(colnames(decon_df))+1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=1.0)
-ggsave(paste0(args$filePath, args$SPOTlightFeaturesName), dpi=500, scale=1.25, width=8, height=8, units='in')
-
+#Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1][-length(colnames(decon_df))+1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=1.0)
+#ggsave(paste0(args$filePath, args$SPOTlightFeaturesName), dpi=500, scale=1.25, width=8, height=8, units='in')
 
 cell_types_all <- colnames(decon_mtrx)[which(colnames(decon_mtrx) != "res_ss")]
 cell_types_all <- paste("X", cell_types_all, sep = "")
@@ -158,6 +163,7 @@ SPOTlight::spatial_scatterpie(se_obj = se_st, cell_types_all = cell_types_all,
                               img_path = paste0(args$outsPath, args$imagePath),
                               cell_types_interest = NULL, slice = NULL, scatterpie_alpha = 1, pie_scale = args$SPOTlightScatterpiesSize)
 ggsave(paste0(args$filePath, args$SPOTlightScatterpiesName), dpi=600, scale=1.0, width=8, height=8, units='in')
+
 
 # Remove cell types not predicted to be on the tissue
 decon_mtrx_sub <- decon_mtrx[, colnames(decon_mtrx)[which(colnames(decon_mtrx) != "res_ss")]]
@@ -183,6 +189,5 @@ write.csv(cbind(cluster_id=nmf_mod[[2]], h), file=paste0(args$filePath, args$SPO
 write.csv(se_sc@active.ident, file=paste0(args$filePath, args$SPOTlightSCclusterIds))
 write.csv(se_sc@reductions[["pca"]]@cell.embeddings, file=paste0(args$filePath, args$SPOTlightSCpca))
 write.csv(se_sc@reductions[["pca"]]@feature.loadings, file=paste0(args$filePath, args$SPOTlightSCloadings))
-write.csv(cluster_markers_all, file=paste0(args$filePath, args$SPOTlightSCclusterMarkers))
 
 quit(status=0)

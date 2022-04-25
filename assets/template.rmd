@@ -31,8 +31,8 @@ Summary output of the **nf-core/spatialtranscriptomics** pipeline output.
 
 > Pooling across cells to normalize single-cell RNA sequencing data with many zero counts. L. Lun, A.T., Bach, K. & Marioni, J.C. Genome Biol 17, 75 (2016). https://doi.org/10.1186/s13059-016-0947-7
 
-Blue histogram shows distribution of counts over all genes and all observations (spots/cells).
-Orange histogram shows normalized counts distributions.
+Orange histogram shows distribution of counts over all genes and all observations (spots/cells).
+Blue histogram shows normalized counts distributions.
 <!-- ST data in the first panel, scRNA-seq data in the right panel. -->
 
 ![__Figure__: QC histogram](`r paste0(samplePath, "st_histogram_with_without_normalization.png")`){width=350px}

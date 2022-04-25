@@ -44,17 +44,23 @@ if countsFile == '':
 if '.h5ad' in countsFile:
     sc_adata = sc.read_h5ad(args.outsPath + '/' + countsFile)
 else:
-    sc_adata = sc.read_mtx(args.outsPath +'matrix.mtx.gz').T
-    genes = pd.read_csv(args.outsPath + 'features.tsv.gz', header=None, sep='\t')
+    sc_adata = sc.read_mtx(args.outsPath +'matrix.mtx.gz').T   
+    print(sc_adata.shape)
+    
+    genes = pd.read_csv(args.outsPath + 'features.tsv.gz', header=None, sep='\t')  
     print(genes)
+    
     if len(genes.columns)==1:
+        genes[0] = genes[0].str.replace('_', '-')
         gs = genes[0]
     else:
+        genes[1] = genes[1].str.replace('_', '-')
         gs = genes[1]
-    sc_adata.var_names = gs
-    sc_adata.var['gene_symbols'] = gs.values
-    sc_adata.obs_names = pd.read_csv(args.outsPath + 'barcodes.tsv.gz', header=None)[0]
-    print(sc_adata.var)
+    
+    sc_adata.var_names = gs.values    
+    sc_adata.var['gene_symbols'] = gs.values   
+    sc_adata.obs_names = pd.read_csv(args.outsPath + 'barcodes.tsv.gz', header=None)[0].values
+    print(sc_adata.var.shape, sc_adata.var)
 
 sc_adata.var_names_make_unique()
 sc.pp.filter_cells(sc_adata, min_counts=args.minCounts)
