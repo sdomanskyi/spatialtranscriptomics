@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
  */
  process MITO_LOAD {
  
+    tag "$sample_id"
     echo true
     
     label "python_process_low"
@@ -43,6 +44,7 @@ import groovy.json.JsonSlurper
  */
  process READ_ST_AND_SC_SCANPY {
   
+    tag "$sample_id"
     label "python_process_low"
     
     input:
@@ -89,6 +91,7 @@ import groovy.json.JsonSlurper
  */
  process NORMALIZATION {
     
+    tag "$sample_id"
     label "r_process"
     cpus 2
     memory '8.GB'
@@ -137,6 +140,7 @@ import groovy.json.JsonSlurper
  */
  process ST_PREPROCESS {
     
+    tag "$sample_id"
     label "python_process"
     cpus 2
     memory '4.GB'
@@ -182,6 +186,7 @@ import groovy.json.JsonSlurper
  */
  process SC_PREPROCESS {
     
+    tag "$sample_id"
     label "python_process"
     cpus 2
     memory '4.GB'
@@ -238,6 +243,7 @@ import groovy.json.JsonSlurper
  */
  process DECONVOLUTION_WITH_STDECONVOLVE {
     
+    tag "${sample_state[0]}"
     label "r_process"
      
     input:
@@ -281,7 +287,8 @@ import groovy.json.JsonSlurper
  * ST data deconvolution with SPOTlight
  */
  process DECONVOLUTION_WITH_SPOTLIGHT {
-     
+ 
+    tag "${sample_state[0]}"
     label "r_process"
     
     input:
@@ -329,6 +336,7 @@ import groovy.json.JsonSlurper
  */
  process CLUSTERING_WITH_BAYESSPACE {
     
+    tag "${sample_state[0]}"
     label "r_process"
      
     input:
@@ -370,6 +378,7 @@ import groovy.json.JsonSlurper
  */
  process ST_SPATIALDE {
      
+    tag "${sample_state[0]}"
     label "python_process"
     
     input:
@@ -423,6 +432,7 @@ import groovy.json.JsonSlurper
  */
  process ST_CLUSTERING {
      
+    tag "${sample_state[0]}"
     label "python_process"
     
     input:
@@ -463,6 +473,7 @@ import groovy.json.JsonSlurper
  */
  process ALL_REPORT {
      
+    tag "${sample_state[0]}"
     label "python_process_low"
     
     input:
