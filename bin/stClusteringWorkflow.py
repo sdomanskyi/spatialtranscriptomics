@@ -49,6 +49,7 @@ parser.add_argument('--SPOTlightPropNorm', metavar='name', type=str, default='SP
 
 parser.add_argument('--BayesSpaceClusters', metavar='name', type=str, default='bayes_spot_cluster.csv', help='')
 
+parser.add_argument('--nPCs', metavar='PC', type=int, default=30, help='Number of principal components.')
 parser.add_argument('--resolution', metavar='name', type=float, default=0.4, help='')
 
 parser.add_argument('--scanpy_UMAP_st_sc', metavar='name', type=str, default='scanpy_UMAP_st_sc.png', help='')
@@ -86,7 +87,7 @@ args = parser.parse_args()
 sc.settings.figdir = args.filePath
 sc.set_figure_params(dpi_save=300, facecolor='white')
 
-for dirName in ['show/', 'umap/', 'umap_density_clusters_/', 'umap_density_sclusters_/', 'violin/']:
+for dirName in ['show/', 'umap/', 'umap_density_clusters_/', 'umap_density_sclusters_/', 'violin/', 'heatmap/']:
     if not os.path.exists(args.filePath + dirName):
         os.makedirs(args.filePath + dirName)
 
@@ -233,10 +234,30 @@ if args.useSCdata:
 
 
 # Clsutering and Selection
-sc.pp.pca(st_adata)
+
+# SCtransform PCA on vst scale.data
+if True:
+    df_temp = pd.read_csv(args.filePath + 'scale.data.' + 'st_adata_sctransformed.csv.gz', index_col=0)
+    se_var_features = pd.read_csv(args.filePath + 'var.features.' + 'st_adata_sctransformed.csv.gz', index_col=0)['x']
+
+    adata_temp = sc.AnnData(df_temp.T, var=pd.DataFrame(index=df_temp.index))
+    adata_temp.var['highly_variable'] = adata_temp.var.index.isin(se_var_features.values)
+    
+    sc.pp.pca(adata_temp, n_comps=args.nPCs, zero_center=False, use_highly_variable=True)
+
+    st_adata.uns['pca'] = adata_temp.uns['pca']
+    st_adata.obsm['X_pca'] = pd.DataFrame(adata_temp.obsm['X_pca'], index=adata_temp.obs.index).reindex(st_adata.obs.index).fillna(0.).values
+    st_adata.varm['PCs'] = pd.DataFrame(adata_temp.varm['PCs'], index=adata_temp.var.index).reindex(st_adata.var.index).fillna(0.).values
+    st_adata.var['highly_variable'] = adata_temp.var['highly_variable'].reindex(st_adata.var.index).fillna(False)
+
+    del df_temp
+    del adata_temp
+else:
+    sc.pp.pca(st_adata, n_comps=args.nPCs, zero_center=False, use_highly_variable=True)
+
 sc.pp.neighbors(st_adata)
 sc.tl.umap(st_adata)
-sc.tl.leiden(st_adata, key_added="clusters", resolution=0.4)
+sc.tl.leiden(st_adata, key_added="clusters", resolution=args.resolution)
 
 BayesSpaceClusters = pd.read_csv(args.filePath + args.BayesSpaceClusters, index_col=0)['spatial.cluster']
 st_adata.obs['sclusters'] = (BayesSpaceClusters.reindex(st_adata.obs.index)-1).astype(str).astype('category')
@@ -245,9 +266,15 @@ st_adata.obs.to_csv(args.filePath + 'st_adata.obs.temp.csv')
 
 # Make plots of UMAP of ST spots clusters
 plt.rcParams["figure.figsize"] = (4, 4)
-sc.pl.umap(st_adata, color=["sclusters", "total_counts", "n_genes_by_counts"], wspace=0.4, save='/' + args.UMAP_st_spots_clusters)
-sc.tl.embedding_density(st_adata, basis='umap', groupby='sclusters')
-sc.pl.embedding_density(st_adata, groupby='sclusters', ncols=10, save='/' + args.UMAP_clusters_embedding_density)
+sc.pl.umap(st_adata, color=["clusters", "sclusters", "total_counts", "n_genes_by_counts"], wspace=0.4, save='/' + args.UMAP_st_spots_clusters)
+
+identity = "clusters"
+
+sc.tl.embedding_density(st_adata, basis='umap', groupby=identity)
+sc.pl.embedding_density(st_adata, groupby=identity, ncols=10, save='/' + args.UMAP_clusters_embedding_density)
+
+sc.tl.rank_genes_groups(st_adata, identity, method='wilcoxon', key_added="wilcoxon")
+sc.pl.rank_genes_groups_heatmap(st_adata, n_genes=10, key="wilcoxon", groupby=identity, show_gene_labels=True, save='/' + 'DEG_heatmap.png')
 
 # Plot LDA cell topics proportions in UMAP
 if True:
@@ -266,21 +293,21 @@ if args.useSCdata:
 # Make plots of spatial ST spots clusters
 if True:
     plt.rcParams["figure.figsize"] = (10, 10)
-    sc.pl.spatial(st_adata, img_key="hires", color=["sclusters"], save='/' + args.Clusters_scanpy_spatial) # groups=['1', '2', '3']
+    sc.pl.spatial(st_adata, img_key="hires", color=[identity], save='/' + args.Clusters_scanpy_spatial) # groups=['1', '2', '3']
 
 # Make violin plots of topic proportions of ST spots by clusters
 if True:
     plt.rcParams["figure.figsize"] = (3.5, 3.5)
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic LDA ')]
-    sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_LDA)
+    sc.pl.violin(st_adata, keys, jitter=0.4, groupby=identity, rotation=0, save='/' + args.violin_topics_LDA)
     
 if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('Topic NMF ')]
-    sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_NMF)
+    sc.pl.violin(st_adata, keys, jitter=0.4, groupby=identity, rotation=0, save='/' + args.violin_topics_NMF)
     
 if args.useSCdata:
     keys = st_adata.obs.columns[st_adata.obs.columns.str.contains('LT PC ')]
-    sc.pl.violin(st_adata, keys, jitter=0.4, groupby='sclusters', rotation=0, save='/' + args.violin_topics_LT_PC)
+    sc.pl.violin(st_adata, keys, jitter=0.4, groupby=identity, rotation=0, save='/' + args.violin_topics_LT_PC)
 
 st_adata.write(args.filePath + '/' + args.saveFileST)
 

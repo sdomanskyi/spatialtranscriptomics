@@ -30,6 +30,8 @@ parser.add_argument('--minCounts', metavar='cutoff', type=int, default=500, help
 parser.add_argument('--minGenes', metavar='cutoff', type=int, default=250, help='Min genes per spot.')
 parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
 
+parser.add_argument('--nHVGs', metavar='hvg', type=int, default=2000, help='Number of vighly variable genes.')
+
 parser.add_argument('--histplotQCmaxTotalCounts', metavar='cutoff', type=int, default=10000, help='Max total counts.')
 parser.add_argument('--histplotQCminGeneCounts', metavar='cutoff', type=int, default=4000, help='Min gene counts.')
 parser.add_argument('--histplotQCbins', metavar='number', type=int, default=40, help='Number of bins.')
@@ -167,6 +169,8 @@ if True:
     
 if not args.SCtransform=='true':
     sc.pp.log1p(st_adata)
+    
+sc.pp.highly_variable_genes(st_adata, flavor="seurat", n_top_genes=args.nHVGs)
 
 # Save normalized data to open in R and Python
 if True:   

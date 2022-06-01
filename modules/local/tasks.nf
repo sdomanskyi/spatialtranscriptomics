@@ -358,7 +358,7 @@ import groovy.json.JsonSlurper
     
     dname=${outdir}/\${sample_id}
     
-    Rscript $projectDir/bin/characterization_BayesSpace.R --filePath=\${dname}/ --numberHVG=$params.BayesSpace_numberHVG --numberPCs=$params.BayesSpace_numberPCs --minClusters=$params.BayesSpace_minClusters --maxClusters=$params.BayesSpace_maxClusters --optimalQ=$params.BayesSpace_optimalQ --STplatform=$params.BayesSpace_STplatform
+    Rscript $projectDir/bin/characterization_BayesSpace.R --filePath=\${dname}/ --numberHVG=$params.BayesSpace_numberHVG --numberPCs=$params.BayesSpace_numberPCs --minClusters=$params.BayesSpace_minClusters --maxClusters=$params.BayesSpace_maxClusters --optimalQ=$params.BayesSpace_optimalQ --STplatform=$params.BayesSpace_STplatform --gamma=$params.BayesSpace_gamma
 
     if [ -s \${dname}/bayes_spot_cluster.csv ] && \
       [ -s \${dname}/bayes_subspot_cluster_and_coord.csv ] && \
@@ -449,7 +449,7 @@ import groovy.json.JsonSlurper
         
     """
     #!/bin/bash
-    
+    echo 0
     sample_id=${sample_id_gr}
     
     dname=${outdir}/\${sample_id}
