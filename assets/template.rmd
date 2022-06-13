@@ -81,7 +81,7 @@ BayesSpace clusters on a spatial layout (left) and a projection UMAP layout (rig
 ![__Figure__](`r paste0(samplePath, "show/Clusters_scanpy_spatial.png")`){width=400px} ![Figure: umap clusters](`r paste0(samplePath, "umap/UMAP_st_spots_clusters.png")`){width=1100px}
 
 
-![__Figure__: BayesSpace clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "umap_density_sclusters_/UMAP_clusters_embedding_density.png")`){width=`r mv`px}
+![__Figure__: BayesSpace clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "umap_density_clusters_/UMAP_clusters_embedding_density.png")`){width=`r mv`px}
 
 
 #### BayesSpace spatially-aware clustering

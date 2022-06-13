@@ -236,7 +236,7 @@ if args.useSCdata:
 # Clsutering and Selection
 
 # SCtransform PCA on vst scale.data
-if True:
+if False:
     df_temp = pd.read_csv(args.filePath + 'scale.data.' + 'st_adata_sctransformed.csv.gz', index_col=0)
     se_var_features = pd.read_csv(args.filePath + 'var.features.' + 'st_adata_sctransformed.csv.gz', index_col=0)['x']
 
@@ -253,11 +253,28 @@ if True:
     del df_temp
     del adata_temp
 else:
-    sc.pp.pca(st_adata, n_comps=args.nPCs, zero_center=False, use_highly_variable=True)
+    sc.pp.pca(st_adata, n_comps=args.nPCs, zero_center=True, use_highly_variable=True)
 
 sc.pp.neighbors(st_adata)
 sc.tl.umap(st_adata)
 sc.tl.leiden(st_adata, key_added="clusters", resolution=args.resolution)
+
+
+def getConsensus(ad, n=10, sample_size=0.75, resolution=0.8, n_top_genes=2000, nPC=30):
+    def getClusters(ad_in, i, sample_size=sample_size, resolution=resolution, n_top_genes=n_top_genes, nPC=nPC):
+        print('Clustering...', i)
+        np.random.seed()
+        ad_temp = ad_in[np.random.choice(np.arange(ad_in.shape[0]), int(sample_size*ad_in.shape[0]), replace=False), :].copy()
+        sc.pp.highly_variable_genes(ad_temp, flavor='seurat', n_top_genes=n_top_genes)
+        sc.pp.pca(ad_temp, n_comps=nPC, zero_center=True, use_highly_variable=True)
+        sc.tl.umap(ad_temp)
+        sc.pp.neighbors(ad_temp)
+        sc.tl.leiden(ad_temp, key_added='clusters', resolution=resolution)
+        return ad_temp.obs['clusters'].astype(str).reindex(ad_in.obs.index).fillna(-1).astype('category').copy()
+    df = pd.concat([getClusters(ad, 'all', sample_size=1)] + [getClusters(ad, i) for i in range(n)], axis=1)
+    return df.replace(-1, np.nan).apply(lambda s: s.dropna().value_counts().index[0], axis=1)
+    
+st_adata.obs['clusters_consensus'] = getConsensus(st_adata, n=50, sample_size=0.75, nPC=args.nPCs, resolution=args.resolution).copy()
 
 BayesSpaceClusters = pd.read_csv(args.filePath + args.BayesSpaceClusters, index_col=0)['spatial.cluster']
 st_adata.obs['sclusters'] = (BayesSpaceClusters.reindex(st_adata.obs.index)-1).astype(str).astype('category')

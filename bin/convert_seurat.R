@@ -32,7 +32,7 @@ unlink(paste0(args$processedDataDir, 'st_adata_raw.h5seurat'))
 unlink(paste0(args$processedDataDir, 'st_adata_processed.h5seurat'))
 
 # Assign spatially-aware cluters as main ident in Seurat object
-Idents(object=se_st) <- se_st@meta.data[["sclusters"]]
+Idents(object=se_st) <- se_st@meta.data[["clusters"]]
 
 # Load and assign image to Seurat object
 image <- Read10X_Image(image.dir=file.path(args$rawDataDir, 'spatial'), filter.matrix=TRUE)[Cells(x=se_st)]

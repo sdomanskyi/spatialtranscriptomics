@@ -31,10 +31,10 @@ print(dim(matrix_ct))
 se <- Seurat::CreateSeuratObject(counts=matrix_ct, min.cells=1, min.genes=1, project="data")
 print(dim(se))
 
-se <- Seurat::SCTransform(object=se, return.only.var.genes=FALSE, do.correct.umi=FALSE, verbose=FALSE, variable.features.n=2000)
+se <- Seurat::SCTransform(object=se, return.only.var.genes=FALSE, do.correct.umi=TRUE, verbose=FALSE, variable.features.n=2000)
 
 write.csv(as.matrix(se@assays$SCT@data), file=gzfile(paste0(args$filePath, args$npNormalizedOutputName)))
-write.csv(se@assays$SCT@var.features, file=gzfile(paste0(args$filePath, 'var.features.', args$npNormalizedOutputName)))
-write.csv(se@assays$SCT@scale.data, file=gzfile(paste0(args$filePath, 'scale.data.', args$npNormalizedOutputName)))
+#write.csv(se@assays$SCT@var.features, file=gzfile(paste0(args$filePath, 'var.features.', args$npNormalizedOutputName)))
+#write.csv(se@assays$SCT@scale.data, file=gzfile(paste0(args$filePath, 'scale.data.', args$npNormalizedOutputName)))
 
 quit(status=0)
