@@ -211,10 +211,10 @@ if not os.path.exists(os.path.dirname(args.saveFile)):
 
 st_adata.write(args.saveFile)
 
-st_adata[st_adata.obs['in_tissue']==1].var.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameVarRaw)
-st_adata[st_adata.obs['in_tissue']==1].obs.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameObsRaw)
+st_adata[st_adata.obs['in_tissue'].astype(int)==1].var.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameVarRaw)
+st_adata[st_adata.obs['in_tissue'].astype(int)==1].obs.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameObsRaw)
 
-X = np.array(st_adata[st_adata.obs['in_tissue']==1].X.todense()).T
+X = np.array(st_adata[st_adata.obs['in_tissue'].astype(int)==1].X.todense()).T
 pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName)
 
 exit(0)
