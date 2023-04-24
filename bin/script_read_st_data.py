@@ -112,6 +112,7 @@ def read_visium_mtx(
     if load_images:
         files = dict(
             tissue_positions_file=path / 'spatial/tissue_positions_list.csv',
+            tissue_positions_file_2=path / 'spatial/tissue_positions.csv',
             scalefactors_json_file=path / 'spatial/scalefactors_json.json',
             hires_image=path / 'spatial/tissue_hires_image.png',
             lowres_image=path / 'spatial/tissue_lowres_image.png',
@@ -153,16 +154,21 @@ def read_visium_mtx(
         adata.uns["spatial"][library_id]["metadata"] = {k: "NA" for k in ("chemistry_description", "software_version")}
 
         # read coordinates
-        positions = pd.read_csv(files['tissue_positions_file'], header=None)
-        positions.columns = [
-            'barcode',
-            'in_tissue',
-            'array_row',
-            'array_col',
-            'pxl_col_in_fullres',
-            'pxl_row_in_fullres',
-        ]
-        positions.index = positions['barcode']
+        if os.path.isfile(files['tissue_positions_file']):
+            positions = pd.read_csv(files['tissue_positions_file'], header=None)
+            positions.columns = [
+                'barcode',
+                'in_tissue',
+                'array_row',
+                'array_col',
+                'pxl_col_in_fullres',
+                'pxl_row_in_fullres',
+            ]
+            positions.index = positions['barcode']
+        elif os.path.isfile(files['tissue_positions_file_2']):
+            positions = pd.read_csv(files['tissue_positions_file_2'], header=0, index_col=0)
+        else:
+            raise NotImplementedError
 
         adata.obs = adata.obs.join(positions, how="left")
 
