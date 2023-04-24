@@ -129,7 +129,8 @@ def read_visium_mtx(
                     #    f"Could not find '{f}'."
                     #)
                 else:
-                    raise OSError(f"Could not find '{f}'")
+                    print(f"Could not find '{f}'")
+                    #raise OSError(f"Could not find '{f}'")
 
         adata.uns["spatial"][library_id]['images'] = dict()
         for res in ['hires', 'lowres']:
@@ -167,6 +168,7 @@ def read_visium_mtx(
             positions.index = positions['barcode']
         elif os.path.isfile(files['tissue_positions_file_2']):
             positions = pd.read_csv(files['tissue_positions_file_2'], header=0, index_col=0)
+            positions['barcode'] = positions.index.values
         else:
             raise NotImplementedError
 
