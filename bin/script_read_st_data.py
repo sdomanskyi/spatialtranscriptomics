@@ -168,6 +168,7 @@ def read_visium_mtx(
             positions.index = positions['barcode']
         elif os.path.isfile(files['tissue_positions_file_2']):
             positions = pd.read_csv(files['tissue_positions_file_2'], header=0, index_col=0)
+            positions.columns = ['in_tissue', 'array_row', 'array_col', 'pxl_col_in_fullres', 'pxl_row_in_fullres']
             positions['barcode'] = positions.index.values
         else:
             raise NotImplementedError

@@ -69,6 +69,45 @@ normDataDir <- args$filePath
 filename <- list.files(path=args$outsPath, pattern=args$fileh5)[1]
 print(args$outsPath)
 
+
+library("jsonlite")
+library("png")
+
+Read10X_Image <- function(image.dir, image.name = "tissue_lowres_image.png", filter.matrix = TRUE, ...) {
+  image <- readPNG(source = file.path(image.dir, image.name))
+  scale.factors <- fromJSON(txt = file.path(image.dir, 'scalefactors_json.json'))
+  tissue.positions.path <- Sys.glob(paths = file.path(image.dir, 'tissue_positions*'))
+  tissue.positions <- read.csv(
+    file = tissue.positions.path,
+    col.names = c('barcodes', 'tissue', 'row', 'col', 'imagerow', 'imagecol'),
+    header = ifelse(
+      test = basename(tissue.positions.path) == "tissue_positions.csv",
+      yes = TRUE,
+      no = FALSE
+    ),
+    as.is = TRUE,
+    row.names = 1
+  )
+  if (filter.matrix) {
+    tissue.positions <- tissue.positions[which(x = tissue.positions$tissue == 1), , drop = FALSE]
+  }
+  unnormalized.radius <- scale.factors$fiducial_diameter_fullres * scale.factors$tissue_lowres_scalef
+  spot.radius <-  unnormalized.radius / max(dim(x = image))
+  return(new(
+    Class = 'VisiumV1',
+    image = image,
+    scale.factors = scalefactors(
+      spot = scale.factors$tissue_hires_scalef,
+      fiducial = scale.factors$fiducial_diameter_fullres,
+      hires = scale.factors$tissue_hires_scalef,
+      scale.factors$tissue_lowres_scalef
+    ),
+    coordinates = tissue.positions,
+    spot.radius = spot.radius
+  ))
+}
+
+
 if (!is.na(filename)) {
     print(filename)
     se_st <- Seurat::Load10X_Spatial(data.dir = args$outsPath, filename = filename)

@@ -137,7 +137,7 @@ st_adata_raw = st_adata.copy()
 
 if args.SCtransform=='true':
     temp_normed = pd.read_csv(args.filePath + '/' + args.npNormalizedOutputName, index_col=0, header=0)
-    st_adata = st_adata[temp_normed.columns, temp_normed.index]
+    st_adata = st_adata[temp_normed.columns, temp_normed.index.str.replace('DEPRECATED-', 'DEPRECATED_')]
     st_adata.X = csr_matrix(temp_normed.T)
 else:
     st_adata.X = csr_matrix(st_adata.X / st_adata.obs['norm_factors'].values[:, None])
