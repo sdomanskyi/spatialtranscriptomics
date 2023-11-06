@@ -1,4 +1,4 @@
-# nf-core/spatialtranscriptomics: Output
+# Output
 
 ## Introduction
 

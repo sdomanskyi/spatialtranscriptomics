@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/spatialtranscriptomics
+    ST-downstream-processing
 ========================================================================================
-    Github : https://github.com/nf-core/spatialtranscriptomics
-    Website: https://nf-co.re/st
-    Slack  : https://nfcore.slack.com/channels/st
+    Github : https://github.com/TheJacksonLaboratory/ST-downstream-processing
 ----------------------------------------------------------------------------------------
 */
 
@@ -36,7 +34,7 @@ WorkflowMain.initialise(workflow, params, log)
 include { ST } from './workflows/spatialtranscriptomics'
 
 //
-// WORKFLOW: Run main nf-core/spatialtranscriptomics analysis pipeline
+// WORKFLOW: Run main analysis pipeline
 //
 workflow NFCORE_ST {
     ST ()
@@ -48,10 +46,6 @@ workflow NFCORE_ST {
 ========================================================================================
 */
 
-//
-// WORKFLOW: Execute a single named workflow for the pipeline
-// See: https://github.com/nf-core/rnaseq/issues/619
-//
 workflow {
     NFCORE_ST ()
 }

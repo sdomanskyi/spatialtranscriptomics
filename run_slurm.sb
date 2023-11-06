@@ -1,13 +1,13 @@
 #!/bin/bash --login
 
 #SBATCH --mail-type=END
-#SBATCH --mail-user=sergii.domanskyi@jax.org
+#SBATCH --mail-user=first.last@jax.org
 #SBATCH -p compute
 #SBATCH -q batch
 #SBATCH -t 10:00:00
 #SBATCH --mem=2G
 
-workPath=/fastscratch/domans/work/
+workPath=/fastscratch/username/work/
 [ ! -d ${workPath} ] && mkdir ${workPath}
 
 ~/nextflow run \

@@ -1,4 +1,4 @@
-# nf-core/spatialtranscriptomics: Documentation
+# Documentation
 
 The nf-core/spatialtranscriptomics documentation is split into the following pages:
 
@@ -7,4 +7,3 @@ The nf-core/spatialtranscriptomics documentation is split into the following pag
 * [Output](output.md)
     * An overview of the different results produced by the pipeline and how to interpret them.
 
-You can find a lot more documentation about installing, configuring and running nf-core pipelines on the website: [https://nf-co.re](https://nf-co.re)
