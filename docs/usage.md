@@ -17,9 +17,10 @@ The user needs to create a samplesheet with information about the samples you wo
 The `sample` identifiers have to be unique. There can be arbirtary number of samples in the samplesheet. The pipeline will perform any downstream analysis for each sample independently:
 
 ```console
-sample_id,species,st_data_dir,sc_data_dir
-SAMPLE_1,Human,/path/to/ST/data1/,/path/to/scRNA-seq/data1/
-SAMPLE_2,Mouse,/path/to/ST/data2/,/path/to/scRNA-seq/data2/
+sample_id,species,st_data_dir,sc_data_dir,sc_annotation_data_dir,sc_annotation_counts,sc_annotation_labels
+sample1,Mouse,/path/to/spaceranger/outs1/,/path/to/filtered_feature_bc_matrix1/,,,
+sample2,Human,/path/to/spaceranger/outs2/,,,,
+sample3,Human,/path/to/spaceranger/outs3/,,/path/to/annotated/data/,counts.csv.gz,celltypes.csv.gz
 ```
 
 ### Full samplesheet

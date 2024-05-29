@@ -1,5 +1,5 @@
 ---
-title: 'Sample ID: `r params$meta$id`'
+title: 'Sample ID: `r params$meta$sample_id`'
 output: html_notebook
 ---
 
@@ -11,77 +11,43 @@ output: html_notebook
 }</style>
 
 ```{r include=FALSE}
-samplePath <- paste0(params$launchDirString, '/', params$outdir, '/', params$meta$id, '/')
-useSCdata <- params$useSCdata
 mv <- 1600
+samplePath <- paste0(getwd(), "/")
 ```
 
-<!-- Sample path: `r samplePath` -->
-
-<!-- CWD: `r getwd()` -->
-
-<!-- launchDir: `r params$launchDir` -->
-
-Summary output of the **nf-core/spatialtranscriptomics** pipeline output.
-
-
-## QC and noramlization
-
-#### Normalization:
-
-> Pooling across cells to normalize single-cell RNA sequencing data with many zero counts. L. Lun, A.T., Bach, K. & Marioni, J.C. Genome Biol 17, 75 (2016). https://doi.org/10.1186/s13059-016-0947-7
-
-Orange histogram shows distribution of counts over all genes and all observations (spots/cells).
-Blue histogram shows normalized counts distributions.
-<!-- ST data in the first panel, scRNA-seq data in the right panel. -->
-
-![__Figure__: QC histogram](`r paste0(samplePath, "st_histogram_with_without_normalization.png")`){width=350px}
-
-<!-- ![__Figure__: QC histogram](`r paste0(samplePath, "sc_histogram_with_without_normalization.png")`){width=350px} -->
+Summary output of the pipeline output.
 
 #### QC spatial layout
 
-Spots were filtered to have at least `r params$STpreprocess_minCounts` counts and `r params$STpreprocess_minGenes` genes expressed.Genes expressed in at least `r params$STpreprocess_minCells` spot were retained for downstream processing.
+Spots were filtered to have at least `r params$STpreprocess_minCounts` counts and `r params$STpreprocess_minGenes` genes expressed.
+Genes expressed in at least `r params$STpreprocess_minCells` spot were retained for downstream processing.
 
-![__Figure__: QC spots under tissue](`r paste0(samplePath, "show/st_QC_in.png")`){width=`r mv`px}
+![__Figure__: QC spots under tissue](`r paste0(samplePath, "st_QC_in.png")`){width=`r mv`px}
 
-![__Figure__: QC of spots without tissue, i.e. ambient mRNA](`r paste0(samplePath, "show/st_QC_out.png")`){width=`r 0.73*mv`px}
+![__Figure__: QC of spots without tissue, i.e. ambient mRNA](`r paste0(samplePath, "st_QC_out.png")`){width=`r 0.73*mv`px}
 
-![__Figure__: QC violin plot](`r paste0(samplePath, "violin/stQCViolin.png")`){width=`r mv`px}
-
+![__Figure__: violin plot](`r paste0(samplePath, "stQCViolin.png")`){width=`r mv`px}
 
 #### QC histograms:
 
-![__Figure__: QC histogram all spots (both inside and outside tissue). (a) Total counts per spot. (b) Total counts per spot where <`r params$STpreprocess_histplotQCmaxTotalCounts`. (c) Number of genes in spots. (d) Number of genes in spots <`r params$STpreprocess_histplotQCminGeneCounts`. (e) Percentage of mitochondrial genes per spot.](`r paste0(samplePath, "st_histogrtam_all.png")`){width=`r mv`px}
+![__Figure__: QC histogram all spots (both inside and outside tissue). (a) Total counts per spot. (b) Total counts per spot where <`r params$STpreprocess_histplotQCmaxTotalCounts`.
+(c) Number of genes in spots. (d) Number of genes in spots <`r params$STpreprocess_histplotQCminGeneCounts`.
+(e) Percentage of mitochondrial genes per spot.](`r paste0(samplePath, "st_histogrtam_all.png")`){width=`r mv`px}
 
-![__Figure__: QC histogram spots on tissue. (a) Total counts per spot. (b) Total counts per spot where <`r params$STpreprocess_histplotQCmaxTotalCounts`. (c) Number of genes in spots. (d) Number of genes in spots <`r params$STpreprocess_histplotQCminGeneCounts`. (e) Percentage of mitochondrial genes per spot.](`r paste0(samplePath, "st_histogrtam_in.png")`){width=`r mv`px}
+![__Figure__: QC histogram spots on tissue. (a) Total counts per spot. (b) Total counts per spot where <`r params$STpreprocess_histplotQCmaxTotalCounts`.
+(c) Number of genes in spots. (d) Number of genes in spots <`r params$STpreprocess_histplotQCminGeneCounts`.
+(e) Percentage of mitochondrial genes per spot.](`r paste0(samplePath, "st_histogrtam_in.png")`){width=`r mv`px}
 
 <!-- ![__Figure__: QC histogram](`r paste0(samplePath, "sc_histogrtam_all.png")`){width=`r mv`px} -->
-
-<!-- ![__Figure__: QC histogram](`r paste0(samplePath, "sc_histogrtam_filtered.png")`){width=`r mv`px} -->
-
-
-
-<!-- #### Label transfer: -->
-
-<!-- LT_individual_histograms.png -->
-<!-- LT_individual_histograms_combined.png -->
-
-<!-- ![Figure LT deconvolution topics.](`r paste0(samplePath, "show/Topics_LT_PC_spatial.png")`){width=`r mv`px} -->
-
-<!-- ![Figure LT deconvolution topics.](`r paste0(samplePath, "violin/violin_topics_LT_PC.png")`){width=`r mv`px} -->
-
-<!-- ![Figure LT deconvolution topics.](`r paste0(samplePath, "umap/UMAP_LT_PC_topics.png")`){width=`r mv`px} -->
 
 
 ## Clustering
 
 BayesSpace clusters on a spatial layout (left) and a projection UMAP layout (right), showing clusters, total counts per spot and number of genes per spot on UMAP projection.
 
-![__Figure__](`r paste0(samplePath, "show/Clusters_scanpy_spatial.png")`){width=400px} ![Figure: umap clusters](`r paste0(samplePath, "umap/UMAP_st_spots_clusters.png")`){width=1100px}
+![__Figure__](`r paste0(samplePath, "Clusters_scanpy_spatial.png")`){width=400px} ![Figure: umap clusters](`r paste0(samplePath, "UMAP_st_spots_clusters.png")`){width=1100px}
 
-
-![__Figure__: BayesSpace clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "umap_density_clusters_/UMAP_clusters_embedding_density.png")`){width=`r mv`px}
+![__Figure__: BayesSpace clusters density of spots on a 2D UMAP layout.](`r paste0(samplePath, "UMAP_clusters_embedding_density.png")`){width=`r mv`px}
 
 
 #### BayesSpace spatially-aware clustering
@@ -91,9 +57,8 @@ BayesSpace clusters on a spatial layout (left) and a projection UMAP layout (rig
 + Iteratively and sequentially, each of the three parameters is updated via MCMC Gibbs sampling.
 + The cluster membership is updated via MCMC Metropolis-Hastings algorithm by taking into account both the likelihood and spatial prior information.
 
-<!-- ![__Figure__ BayesSpace Q-tune.](`r paste0(samplePath, "st_bayes_qtune.png")`){width=250px} -->
-
-![__Figure__: BayesSpace spatially-aware clusters enhanced.](`r paste0(samplePath, "st_bayes_clusters.png")`){width=750px} ![Figure BayesSpace spatially-aware clusters.](`r paste0(samplePath, "st_bayes_clusters_enhanced.png")`){width=750px}
+![__Figure__: BayesSpace spatially-aware clusters enhanced.](`r paste0(samplePath, "st_bayes_clusters.png")`){width=750px}
+![Figure BayesSpace spatially-aware clusters.](`r paste0(samplePath, "st_bayes_clusters_enhanced.png")`){width=750px}
 
 
 #### BayesSpace for resolution enhancement of selected genes
@@ -117,45 +82,39 @@ BayesSpace clusters on a spatial layout (left) and a projection UMAP layout (rig
 
 ## Deconvolution of spots
 
-The [10x Visium](https://www.10xgenomics.com/) spots are 55 $\mu m$ in diameter, containing 1-10 cells on average per spot depending on tissue type. There are algorithms designed to quantify cell abundance using gene expression data. Below are the results of deconvolution of spots with Non-negative Matrix Factorization (NMF)-based and Latent Dirichlet Allocation (LDA)-based methods.
+The [10x Visium](https://www.10xgenomics.com/) spots are 55 $\mu m$ in diameter, containing 1-10 cells on average per spot depending on tissue type.
+There are algorithms designed to quantify cell abundance using gene expression data.
+Below are the results of deconvolution of spots with Non-negative Matrix Factorization (NMF)-based and Latent Dirichlet Allocation (LDA)-based methods.
 
 
 #### STdeconvolve spot deconvolution into "topics" of cell types
 
 STdeconvolve is the LDA-based method designed to infer cell types proportions in ST data.
 
-![__Figure__ STdeconvolve deconvolution.](`r paste0(samplePath, "STdeconvolve_st_scatterpies.png")`){width=750px} ![Figure STdeconvolve deconvolution.](`r paste0(samplePath, "STdeconvolve_st_prop_corr.png")`){width=500px}
+![__Figure__ STdeconvolve deconvolution.](`r paste0(samplePath, "STdeconvolve_st_scatterpies.png")`){width=750px}
+![__Figure__ STdeconvolve deconvolution.](`r paste0(samplePath, "STdeconvolve_st_prop_corr.png")`){width=500px}
 
-<!-- ![Figure STdeconvolve deconvolution.](`r paste0(samplePath, "STdeconvolve_st_prop.png")`){width=750px} -->
+![__Figure__: STdeconvolve deconvolution, topics on a spatial layout.](`r paste0(samplePath, "Topics_LDA_spatial.png")`){width=`r mv`px}
 
-![__Figure__: STdeconvolve deconvolution, topics on a spatial layout.](`r paste0(samplePath, "show/Topics_LDA_spatial.png")`){width=`r mv`px}
+![__Figure__: STdeconvolve deconvolution, topics on a UMAP layout.](`r paste0(samplePath, "UMAP_LDA_topics.png")`){width=`r mv`px}
 
-![__Figure__: STdeconvolve deconvolution, topics on a UMAP layout.](`r paste0(samplePath, "umap/UMAP_LDA_topics.png")`){width=`r mv`px}
-
-![__Figure__: STdeconvolve deconvolution, topics proportions in the "classical" clusters.](`r paste0(samplePath, "violin/violin_topics_LDA.png")`){width=`r mv`px}
+![__Figure__: STdeconvolve deconvolution, topics proportions in the clusters.](`r paste0(samplePath, "violin_topics_LDA.png")`){width=`r mv`px}
 
 
-```{r SPOTlight-plot, echo=FALSE, results='asis', eval=useSCdata}
+
+
+```{r SPOTlight-plot, echo=FALSE, results='asis', eval=file.exists(paste0(samplePath, "SPOTlight_st_topic_profiles.png"))}
 
 cat('\n#### SPOTlight spot deconvolution into cell types based on scRNA-seq data\n')
 
 cat('\nSPOTlight is the NMF-based method designed to infer cell types proportions in ST data by using clustering scRNA-seq data of the same/similar tissue.\n')
 
-cat(sprintf('\n![__Figure__: scRNA-seq clusters, for SPOTlight deconvolution.](%s){width=500px} ', paste0(samplePath, "SPOTlight_sc_clusters.png")))
-cat(sprintf('![__Figure__: Figure SPOTlight deconvolution.](%s){width=500px}\n', paste0(samplePath, "SPOTlight_st_scatterpies.png")))
-
 cat(sprintf('\n![__Figure__: SPOTlight deconvolution proportions scatterpies.](%s){width=500px} ', paste0(samplePath, "SPOTlight_st_topic_profiles.png")))
-cat(sprintf('![__Figure__: Figure SPOTlight deconvolution.](%s){width=500px}\n', paste0(samplePath, "SPOTlight_st_prop_corr.png")))
 
-cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a spatial layout.](%s){width=%spx}\n', paste0(samplePath, "show/Topics_NMF_spatial.png"), mv))
-cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a UMAP layout.](%s){width=%spx}\n', paste0(samplePath, "umap/UMAP_NMF_topics.png"), mv))
-cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types proportions in the clusters.](%s){width=%spx}\n', paste0(samplePath, "violin/violin_topics_NMF.png"), mv))
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a spatial layout.](%s){width=%spx}\n', paste0(samplePath, "Topics_NMF_spatial.png"), mv))
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types on a UMAP layout.](%s){width=%spx}\n', paste0(samplePath, "UMAP_NMF_topics.png"), mv))
+cat(sprintf('\n![__Figure__: scRNA-seq clusters, cell types proportions in the clusters.](%s){width=%spx}\n', paste0(samplePath, "violin_topics_NMF.png"), mv))
 ```
-
-
-<!-- ## Integration of ST and scRNA-seq data -->
-
-<!-- ![__Figure__ Integration.](`r paste0(samplePath, "umap/scanpy_UMAP_st_sc.png")`){width=350px} ![__Figure__ Integration.](`r paste0(samplePath, "umap/scanpy_UMAP_st_sc_BBKNN.png")`){width=350px} ![Figure Integration.](`r paste0(samplePath, "scanorama_UMAP_st_sc.png")`){width=350px} -->
 
 
 
@@ -168,6 +127,5 @@ SpatialDE implements a statistical test to identify genes with spatial patterns 
 The underlying patterns and the gene-pattern assignments are learned from data.
 Nonparametric regression model tests whether gene expression levels at different locations co-vary in a manner that depends on their relative location.
 
-![__Figure__: SpatialDE top-`r params$SpatialDE_plotTopHVG` highly spatially differentially variable genes.](`r paste0(samplePath, "show/stSpatialDE.png")`){width=`r mv`px}
-
+![__Figure__: SpatialDE top highly spatially differentially variable genes.](`r paste0(samplePath, "stSpatialDE.png")`){width=`r mv`px}
 

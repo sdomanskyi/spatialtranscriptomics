@@ -1,6 +1,3 @@
-#!/opt/conda/bin/python
-
-# Load packages 
 import os
 import sys
 import argparse
@@ -17,25 +14,61 @@ from matplotlib.image import imread
 import anndata
 from anndata import AnnData, read_csv
 
+from matplotlib import pyplot as plt
+import scipy.stats
+from scipy.sparse import csr_matrix
 
-# Parse command-line arguments
-parser = argparse.ArgumentParser(description='Load spatial traqnscriptomics data from MTX or HDF5 count matrices and aligned images.')
+def resample_counts_inplace(adata, downsample=True, upsample=True, target_total=2*10**3, n_iter=10, seed=None):
+    
+    is_csr_matrix = type(adata.X) is csr_matrix
 
-parser.add_argument('--outsPath', metavar='outspath', type=str, default=None, help='Path to Space Range outs directory, etc.')
-parser.add_argument('--saveFile', metavar='savefile', type=str, default=None, help='Path to a file to save h5ad data into.')
-parser.add_argument('--countsFile', metavar='countsfile', type=str, default='raw_feature_bc_matrix.h5', help='Name of the HDF5 file.')
-parser.add_argument('--npCountsOutputName', metavar='csvgzoutput', type=str, default=None, help='Name of the csv.gz file.')
+    if not seed is None:
+        np.random.seed(seed)
 
-parser.add_argument('--nameVarRaw', metavar='File name', type=str, default='st_adata.raw.var.csv', help='Name of the features file.')
-parser.add_argument('--nameObsRaw', metavar='File name', type=str, default='st_adata.raw.obs.csv', help='Name of the observations file.')
+    for i in range(n_iter):
+        v = adata.to_df().values.astype(int)
+        totals_per_obs = v.sum(axis=1)
 
-parser.add_argument('--minCounts', metavar='cutoff', type=int, default=1, help='Min counts per spot.')
-parser.add_argument('--minCells', metavar='cutoff', type=int, default=1, help='Min cells per gene.')
+        if downsample:
+            wh = np.where(totals_per_obs > target_total)[0]
+            for i in wh:
+                wh_nonzero_genes = np.where(v[i] > 0)[0]
+                diff = totals_per_obs[i] - target_total
+                for j in np.random.choice(wh_nonzero_genes, diff, replace=True):
+                    if v[i, j] > 0:
+                        v[i, j] -= 1
 
-args = parser.parse_args()
+        if upsample:
+            wh = np.where(totals_per_obs < target_total)[0]
+            for i in wh:
+                wh_nonzero_genes = np.where(v[i] > 0)[0]
+                diff = target_total - totals_per_obs[i]
+                for j in np.random.choice(wh_nonzero_genes, diff, replace=True):
+                    if v[i, j] > 0:
+                        v[i, j] += 1
+
+        adata.X = v
+    
+    if is_csr_matrix:
+        adata.X = csr_matrix(adata.X)
+
+    return
 
 
-# Function to read MTX
+def histplotQC(se_data, bins, ax):
+    try:
+        ax.hist(se_data, density=True, bins=bins, color='navy', alpha=0.3)
+        kde = scipy.stats.gaussian_kde(se_data)
+        xx = np.linspace(min(se_data), max(se_data), 300)
+        ax.set_xlabel(se_data.name)
+        ax.set_ylabel('Density')
+        ax.plot(xx, kde(xx), color='crimson')
+        ax.set_xlim([0, ax.get_xlim()[1]])
+    except:
+        pass
+    return
+
+
 def read_visium_mtx(
     path: Union[str, Path],
     genome: Optional[str] = None,
@@ -93,17 +126,10 @@ def read_visium_mtx(
         Spatial spot coordinates, usable as `basis` by :func:`~scanpy.pl.embedding`.
     """
     path = Path(path)
-    #adata = read_10x_h5(path / count_file, genome=genome)
     adata = read_10x_mtx(path / 'raw_feature_bc_matrix')
     
     adata.uns["spatial"] = dict()
 
-    #from h5py import File
-
-    #with File(path / 'raw_feature_bc_matrix' / count_file, mode="r") as f:
-    #    attrs = dict(f.attrs)
-    #if library_id is None:
-    #    library_id = str(attrs.pop("library_ids")[0], "utf-8")
     if library_id is None:
         library_id = 'library_id'
 
@@ -118,20 +144,6 @@ def read_visium_mtx(
             lowres_image=path / 'spatial/tissue_lowres_image.png',
         )
 
-        # check if files exists, continue if images are missing
-        for f in files.values():
-            if not f.exists():
-                if any(x in str(f) for x in ["hires_image", "lowres_image"]):
-                    print("You seem to be missing an image file.")
-                    print("Could not find '{f}'.")
-                    #logg.warning(
-                    #    f"You seem to be missing an image file.\n"
-                    #    f"Could not find '{f}'."
-                    #)
-                else:
-                    print(f"Could not find '{f}'")
-                    #raise OSError(f"Could not find '{f}'")
-
         adata.uns["spatial"][library_id]['images'] = dict()
         for res in ['hires', 'lowres']:
             try:
@@ -145,12 +157,6 @@ def read_visium_mtx(
         adata.uns["spatial"][library_id]['scalefactors'] = json.loads(
             files['scalefactors_json_file'].read_bytes()
         )
-
-        #adata.uns["spatial"][library_id]["metadata"] = {
-        #    k: (str(attrs[k], "utf-8") if isinstance(attrs[k], bytes) else attrs[k])
-        #    for k in ("chemistry_description", "software_version")
-        #    if k in attrs
-        #}
         
         adata.uns["spatial"][library_id]["metadata"] = {k: "NA" for k in ("chemistry_description", "software_version")}
 
@@ -192,32 +198,3 @@ def read_visium_mtx(
             )
 
     return adata
-
-for fname in os.listdir(args.outsPath):
-    if args.countsFile in fname:
-        args.countsFile = fname
-        break
-
-
-# Main script
-if args.countsFile in os.listdir(args.outsPath):
-    st_adata = sc.read_visium(args.outsPath, count_file=args.countsFile, library_id=None, load_images=True, source_image_path=None)
-else:
-    st_adata = read_visium_mtx(args.outsPath)
-
-st_adata.var_names_make_unique()
-sc.pp.filter_cells(st_adata, min_counts=args.minCounts)
-sc.pp.filter_genes(st_adata, min_cells=args.minCells)
-
-if not os.path.exists(os.path.dirname(args.saveFile)):
-    os.makedirs(os.path.dirname(args.saveFile))
-
-st_adata.write(args.saveFile)
-
-st_adata[st_adata.obs['in_tissue'].astype(int)==1].var.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameVarRaw)
-st_adata[st_adata.obs['in_tissue'].astype(int)==1].obs.to_csv(os.path.dirname(args.saveFile) + '/' + args.nameObsRaw)
-
-X = np.array(st_adata[st_adata.obs['in_tissue'].astype(int)==1].X.todense()).T
-pd.DataFrame(X).to_csv(os.path.dirname(args.saveFile) + '/' + args.npCountsOutputName)
-
-exit(0)

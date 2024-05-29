@@ -1,0 +1,16 @@
+#!/bin/bash --login
+#SBATCH -p compute
+#SBATCH -q batch
+#SBATCH -t 24:00:00
+#SBATCH --mem=12G
+#SBATCH --ntasks=1
+
+cd $SLURM_SUBMIT_DIR
+
+nextflow run main.nf \
+-w $2 \
+-profile slurm,singularity \
+-resume \
+--input=$1 \
+--outdir=$3 \
+--bind="-B $4"

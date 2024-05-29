@@ -7,8 +7,6 @@ library(ggplot2)
 library(Seurat)
 library(STdeconvolve)
 library(corrplot)
-#library(reticulate)
-
 
 # Parse command-line arguments
 parser <- ArgumentParser()
@@ -53,6 +51,7 @@ args$add_argument("--STdeconvolveSCclusterIds", default="STdeconvolve_sc_cluster
 args$add_argument("--STdeconvolveSCpca", default="STdeconvolve_sc_pca.csv", help="dir", metavar="file", required=FALSE)
 args$add_argument("--STdeconvolveSCloadings", default="STdeconvolve_sc_pca_feature_loadings.csv", help="dir", metavar="file", required=FALSE)
 args$add_argument("--STdeconvolveSCclusterMarkers", default="STdeconvolve_sc_cluster_markers.csv", help="dir", metavar="file", required=FALSE)
+args$add_argument("--trainedLDA", default="", help="dir", metavar="file", required=FALSE)
 
 args <- parser$parse_args()
 
@@ -125,7 +124,6 @@ colnames(matrix_st) <- st_obs
 se_st@assays$Spatial@counts <- as(matrix_st, "sparseMatrix")
 se_st@assays$Spatial@data <- as(matrix_st, "sparseMatrix")
 
-#se_st@assays$Spatial@counts <- round((args$countsFactor)*se_st@assays$Spatial@counts)
 se_st@assays$Spatial@counts <- as(round(exp(se_st@assays$Spatial@counts) - 1), Class='dgCMatrix')
 
 corpus <- restrictCorpus(se_st@assays$Spatial@counts, removeAbove=args$corpusRemoveAbove, removeBelow=args$corpusRemoveBelow)
@@ -133,11 +131,15 @@ corpus <- corpus + 1
 print(dim(as.matrix(corpus)))
 print(sum(colSums(as.matrix(corpus))==0))
 
-ldas <- fitLDA(t(as.matrix(corpus)), Ks = seq(args$LDAminTopics, args$LDAmaxTopics, by = 1))
-optLDA <- optimalModel(models = ldas, opt = "min")
-saveRDS(object = optLDA, file = paste0(args$filePath, args$LDAsaveFile))
 
-optLDA <- readRDS(file = paste0(args$filePath, args$LDAsaveFile))
+if (args$trainedLDA=="") {
+    ldas <- fitLDA(t(as.matrix(corpus)), Ks = seq(args$LDAminTopics, args$LDAmaxTopics, by = 1))
+    optLDA <- optimalModel(models = ldas, opt = "min")
+    saveRDS(object = optLDA, file = paste0(args$filePath, args$LDAsaveFile))
+} else {
+    print("Loading provided LDA")
+    optLDA <- readRDS(file = args$trainedLDA)
+}
 
 results <- getBetaTheta(optLDA, t(as.matrix(corpus)))
 deconProp <- results$theta
@@ -155,10 +157,6 @@ decon_df <- deconProp %>% data.frame() %>% tibble::rownames_to_column("barcodes"
 print(colnames(decon_df))
 print(dim(decon_df))
 
-#se_st@meta.data <- se_st@meta.data %>% tibble::rownames_to_column("barcodes") %>% dplyr::left_join(decon_df, by = "barcodes") %>% tibble::column_to_rownames("barcodes")
-#Seurat::SpatialFeaturePlot(object = se_st, features = colnames(decon_df)[-1], alpha = c(0.1, 1), min.cutoff=0, max.cutoff=0.3, crop = FALSE, pt.size.factor=args$STdeconvolveFeaturesSizeFactor)
-#ggsave(paste0(args$filePath, args$STdeconvolveFeaturesName), dpi=300, scale=2.0, width=8, height=8, units='in')
-
 # Cell type proportions correlation
 decon_mtrx_sub <- deconProp[, colnames(deconProp)[which(colnames(deconProp) != "res_ss")]]
 decon_mtrx_sub <- decon_mtrx_sub[, colSums(decon_mtrx_sub) > 0]
@@ -173,44 +171,7 @@ ggcorrplot::ggcorrplot(corr = decon_cor, p.mat = p.mat[[1]], hc.order = TRUE, ty
     axis.text.x = ggplot2::element_text(angle = 90), axis.text = ggplot2::element_text(size = 18, vjust = 0.5))
 ggsave(paste0(args$filePath, args$STdeconvolveCorrName), dpi=600, scale=0.75, width=8, height=8, units='in')
 
-print('Mark LDA 1')
-
 write.csv(results$theta, file=paste0(args$filePath, args$STdeconvolvePropNormName))
-
-print('Mark LDA 2')
-
 write.csv(t(results$beta), file=paste0(args$filePath, args$STdeconvolveBetaNormName))
-
-print('Mark LDA 3')
-
-##### For PCA and clustering only
-print("Flag:")
-print(args$useSCdata)
-if (args$useSCdata=="true") {
-    matrix_sc <- data.matrix(read.csv(paste0(normDataDir, args$SCnameX), row.names=1))
-    sc_genes <- read.csv(paste0(normDataDir, args$SCnameVar))
-    sc_obs <- read.csv(paste0(normDataDir, args$SCnameObs))
-    rownames(matrix_sc) <- get(colnames(sc_genes)[1], sc_genes)
-    colnames(matrix_sc) <- get(colnames(sc_obs)[1], sc_obs)
-    
-    se_sc <- Seurat::CreateSeuratObject(counts = as(exp(matrix_sc) - 1, "sparseMatrix"))
-    #se_sc <- Seurat::CreateSeuratObject(counts = as((args$countsFactor)*matrix_sc, "sparseMatrix"))
-    
-    se_sc <- Seurat::FindVariableFeatures(se_sc, verbose = FALSE)
-    se_sc <- Seurat::ScaleData(se_sc, verbose = FALSE)
-    se_sc <- Seurat::RunPCA(se_sc, verbose = FALSE)
-    se_sc <- Seurat::RunUMAP(se_sc, dims = 1:30, verbose = FALSE)
-    se_sc <- Seurat::FindNeighbors(se_sc)
-    se_sc <- Seurat::FindClusters(se_sc, resolution=0.3)
-    Seurat::DimPlot(se_sc, group.by = "seurat_clusters", label = TRUE) + Seurat::NoLegend()
-    ggsave(paste0(args$filePath, args$STdeconvolveSCclustersName), dpi=600, scale=0.5, width=8, height=8, units='in')
-    cluster_markers_all <- Seurat::FindAllMarkers(object = se_sc, assay = NULL, slot = "data", verbose = TRUE, test.use = "wilcox", only.pos = TRUE)
-      
-    write.csv(se_sc@active.ident, file=paste0(args$filePath, args$STdeconvolveSCclusterIds))
-    write.csv(se_sc@reductions[["pca"]]@cell.embeddings, file=paste0(args$filePath, args$STdeconvolveSCpca))
-    write.csv(se_sc@reductions[["pca"]]@feature.loadings, file=paste0(args$filePath, args$STdeconvolveSCloadings))
-    write.csv(cluster_markers_all, file=paste0(args$filePath, args$STdeconvolveSCclusterMarkers))
-} else {
-}
 
 quit(status=0)

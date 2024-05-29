@@ -1,0 +1,4 @@
+sample_id,species,st_data_dir,sc_data_dir,sc_annotation_data_dir,sc_annotation_counts,sc_annotation_labels
+WM4237h_T1_S0_ST,Human,/projects/chuang-lab/rubinstein/ST_melanomaPDX/data/SC2200323_WM4237-T1-Day14-229/spaceranger/,,,,
+WM4237ha_T1_S0_ST,Human,/projects/chuang-lab/rubinstein/ST_melanomaPDX/data/SC2200323_WM4237-T1-Day14-229/spaceranger/,,/sdata/activities/kappsen-tmc/visium/analysis/R/,ad_sample_counts.csv.gz,ad_sample_celltype.csv.gz
+WM4237m_T1_S0_ST,Mouse,/projects/chuang-lab/rubinstein/ST_melanomaPDX/data/SC2200323_WM4237-T1-Day14-229/spaceranger/,/projects/chuang-lab/USERS/domans/sc_mouse_kidney_mapping_CellRanger/SRX3436301/outs/,,,
